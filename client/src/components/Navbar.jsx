@@ -1,136 +1,130 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const navLinks = [
+    { name: "How it Works", href: "/" },
+    { name: "Categories", href: "/" },
+    { name: "About Us", href: "/" },
+  ];
 
   return (
-    <div className="pt-32">
-    <nav className="w-full px-6 md:px-16 lg:px-24 relative z-50">
-
-      
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-
-        {/* LOGO */}
-        <h1 className="ml-4 md:ml-20 text-2xl md:text-3xl font-bold cursor-pointer transition-transform duration-200 hover:scale-105">
-          CAMPUS
-          <span className="text-orange-500">Xchange</span>
-        </h1>
-
-        {/* NAV LINKS + BUTTON */}
-        <div className="hidden md:flex items-center gap-12 mr-6">
-          
-          <ul className="flex gap-10 text-gray-600 font-medium text-[1.1rem]">
-            <li className="cursor-pointer hover:text-orange-500 transition-colors duration-200 relative group">
-              How it Works
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full"></span>
-            </li>
-            <li className="cursor-pointer hover:text-orange-500 transition-colors duration-200 relative group">
-              Categories
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full"></span>
-            </li>
-            <li className="cursor-pointer hover:text-orange-500 transition-colors duration-200 relative group">
-              About Us
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full"></span>
-            </li>
-          </ul>
-
-        <Link
-          to="/login"
-  className="
-    group
-    flex items-center gap-2
-    bg-gradient-to-r from-orange-500 to-red-500
-    text-white
-    px-8 py-3
-    rounded-full
-    font-semibold text-lg
-    shadow-md
-    transition-all duration-300
-    hover:shadow-orange-500/40 hover:shadow-lg
-    hover:-translate-y-0.5
-    active:scale-95 active:translate-y-0
-  "
->
-  <span>Login/Sign Up</span>
-
-  {/* Icon container */}
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth={2.5}
-    stroke="currentColor"
-    className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-  </svg>
-</Link>
-
-
+    <nav 
+      className={`fixed top-0 w-full z-[100] transition-all duration-500 ${
+        scrolled 
+          ? "py-3 bg-white/90 backdrop-blur-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-b border-gray-100" 
+          : "py-6 bg-transparent"
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-6 md:px-16 lg:px-24 flex items-center justify-between">
+        
+        {/* LOGO - Shifts Right & Reveals on Hover */}
+        <div className="flex-1">
+          <Link to="/" className="group flex items-center gap-1 w-fit transition-all duration-500 ease-out hover:translate-x-6">
+            <h1 className="text-2xl md:text-3xl font-black tracking-tighter flex items-center">
+              <span className="text-gray-900 group-hover:text-[#f57404] transition-colors duration-300">CAMPUS</span>
+              <span className="text-[#f57404] italic ml-1">X</span>
+              <span className="text-[#f57404] font-medium tracking-tight overflow-hidden transition-all duration-500 max-w-0 opacity-0 group-hover:max-w-[120px] group-hover:opacity-100 group-hover:ml-1">
+                change
+              </span>
+            </h1>
+          </Link>
         </div>
 
-        {/* MOBILE HAMBURGER */}
-        <div className="md:hidden flex items-center">
-          <button onClick={() => setIsOpen(!isOpen)} className="text-gray-600 focus:outline-none">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              {isOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-              )}
-            </svg>
+        {/* NAV LINKS - High-End Interactive Styles */}
+        <div className="hidden md:flex items-center gap-12">
+          <ul className="flex gap-10">
+            {navLinks.map((link) => (
+              <li key={link.name} className="group relative py-2">
+                <Link
+                  to={link.href}
+                  className="relative text-[1.05rem] font-bold text-gray-600 transition-all duration-300 
+                             group-hover:text-[#f57404] group-hover:-translate-y-1 flex flex-col items-center"
+                >
+                  {/* The Text */}
+                  <span>{link.name}</span>
+
+                  {/* 1. The Dot Indicator (appears above) */}
+                  <span className="absolute -top-1 w-1 h-1 bg-[#f57404] rounded-full opacity-0 scale-0 
+                                   transition-all duration-300 group-hover:opacity-100 group-hover:scale-100 group-hover:-top-2" />
+                  
+                  {/* 2. The Liquid Underline (expands from center) */}
+                  <span className="absolute -bottom-1 w-0 h-[2px] bg-[#f57404] rounded-full 
+                                   transition-all duration-300 ease-out group-hover:w-full" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {/* CTA BUTTON - Glow effect */}
+          <Link
+            to="/login"
+            className="
+              relative overflow-hidden group
+              bg-gray-900 text-white
+              px-8 py-3 rounded-2xl
+              font-bold text-sm uppercase tracking-widest
+              transition-all duration-300
+              hover:bg-[#f57404] hover:shadow-[0_20px_40px_-12px_rgba(245,116,4,0.5)]
+              hover:-translate-y-1 active:scale-95
+            "
+          >
+            <span className="relative z-10">Get Started</span>
+            <div className="absolute inset-0 bg-white/10 translate-y-full transition-transform duration-300 group-hover:translate-y-0" />
+          </Link>
+        </div>
+
+        {/* MOBILE MENU BUTTON */}
+        <div className="md:hidden">
+          <button 
+            onClick={() => setIsOpen(!isOpen)} 
+            className="p-2 text-gray-900 focus:outline-none"
+          >
+            <div className="w-6 h-5 flex flex-col justify-between">
+              <span className={`h-0.5 bg-current transition-all duration-300 ${isOpen ? "rotate-45 translate-y-2 w-6" : "w-6"}`} />
+              <span className={`h-0.5 bg-current transition-all duration-300 ${isOpen ? "opacity-0" : "w-4 self-end"}`} />
+              <span className={`h-0.5 bg-current transition-all duration-300 ${isOpen ? "-rotate-45 -translate-y-2 w-6" : "w-5 self-end"}`} />
+            </div>
           </button>
         </div>
       </div>
 
-      {/* MOBILE MENU */}
-      <div className={`md:hidden absolute top-full left-0 w-full bg-white shadow-lg px-6 flex flex-col items-center gap-6 overflow-hidden transition-all duration-300 ease-in-out ${
-        isOpen ? "max-h-[500px] opacity-100 py-6" : "max-h-0 opacity-0 py-0"
-      }`}>
-          <ul className="flex flex-col gap-6 text-gray-600 font-medium text-[1.1rem] text-center">
-            <li className="cursor-pointer hover:text-orange-500 transition-colors duration-200">
-              How it Works
-            </li>
-            <li className="cursor-pointer hover:text-orange-500 transition-colors duration-200">
-              Categories
-            </li>
-            <li className="cursor-pointer hover:text-orange-500 transition-colors duration-200">
-              About Us
-            </li>
-          </ul>
-          <Link
-            to="/login"
-            className="
-              group
-              flex items-center gap-2
-              bg-gradient-to-r from-orange-500 to-red-500
-              text-white
-              px-8 py-3
-              rounded-full
-              font-semibold text-lg
-              shadow-md
-              transition-all duration-300
-              hover:shadow-orange-500/40 hover:shadow-lg
-              hover:-translate-y-0.5
-              active:scale-95 active:translate-y-0
-            "
-          >
-            <span>Login/Sign Up</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={2.5}
-              stroke="currentColor"
-              className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1"
+      {/* MOBILE OVERLAY */}
+      <div className={`
+        md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl
+        transition-all duration-500 ease-in-out border-b border-gray-100
+        ${isOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}
+      `}>
+        <div className="p-10 flex flex-col gap-8 text-center">
+          {navLinks.map((link) => (
+            <Link 
+              key={link.name} 
+              to={link.href} 
+              className="text-2xl font-black text-gray-800 hover:text-[#f57404] transition-colors"
+              onClick={() => setIsOpen(false)}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
+              {link.name}
+            </Link>
+          ))}
+          <Link 
+            to="/login" 
+            className="bg-[#f57404] text-white py-5 rounded-3xl font-bold shadow-xl"
+            onClick={() => setIsOpen(false)}
+          >
+            Login / Sign Up
           </Link>
+        </div>
       </div>
     </nav>
-    </div>
   );
 }
 
