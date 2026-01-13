@@ -3,7 +3,9 @@ import { assets } from "../assets/assets";
 
 function Frontpage() {
   return (
-    <section className="relative w-full pt-32 pb-40 md:pt-40 md:pb-52 flex justify-center overflow-hidden">
+    <section className="relative w-full bg-[#f1efeecd] pt-32 pb-20 md:pt-40 md:pb-28 flex justify-center overflow-hidden">
+
+
       
       {/* BACKGROUND DECORATION */}
       <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-[600px] h-[600px] bg-[#f57404]/5 rounded-full blur-[120px] -z-10" />
@@ -22,7 +24,7 @@ function Frontpage() {
             </div>
 
             <div className="space-y-6 mb-10">
-              <h1 className="text-6xl lg:text-8xl font-black tracking-tighter text-gray-900 leading-[0.95]">
+              <h1 className="text-3xl lg:text-5xl font-black tracking-tighter text-gray-900 leading-[0.95]">
                 Campus<br />
                 <span className="text-[#f57404]">Xchange</span>
               </h1>

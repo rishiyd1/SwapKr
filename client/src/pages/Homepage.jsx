@@ -1,18 +1,18 @@
 import React from 'react'
 import Navbar from '../components/Navbar'
 import Frontpage from '../components/Frontpage'
+import Working from '../components/Working'
 
 function Homepage() {
   return (
-    <div className='flex flex-col'>
+    <div >
      
-     <br />
+     
       <Navbar/>
-      <br />
-      <br />
-      <br />
-      <br />
+      
       <Frontpage/>
+      
+      <Working/>
     </div>
   )
 }
