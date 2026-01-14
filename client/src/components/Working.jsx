@@ -1,4 +1,5 @@
 import React from "react";
+import { assets } from "../assets/assets";
 
 const Working = () => {
   const steps = [
@@ -8,7 +9,7 @@ const Working = () => {
       description:
         "Create your account using your university email. We verify you're a real student at your campus.",
       image:
-        "https://img.freepik.com/free-vector/user-verification-unauthorized-access-prevention-private-account-authentication-cyber-security-shield-padlock-protection-system-design-element_335657-1545.jpg",
+        "https://s3.envato.com/files/483587867/screenshort/02_preview02.jpg",
       cardBg: "bg-[#E6E1FF]",
     },
     {
@@ -16,8 +17,7 @@ const Working = () => {
       title: "Browse or List",
       description:
         "Find what you need or list items you want to sell or lend. Everything stays within your campus.",
-      image:
-        "https://img.freepik.com/free-vector/order-confirmed-concept-illustration_114360-1486.jpg",
+      image: assets.items,
       cardBg: "bg-white",
     },
     {
@@ -26,7 +26,7 @@ const Working = () => {
       description:
         "Connect with other students and arrange safe meetups on campus to complete your transaction.",
       image:
-        "https://img.freepik.com/free-vector/shaking-hands-concept-illustration_114360-5534.jpg",
+        "https://thumbs.dreamstime.com/z/people-exchange-books-reading-students-readers-club-bookcrossing-sharing-vector-illustration-cartoon-isolated-young-paper-252405920.jpg?w=992",
       cardBg: "bg-[#D8EEFF]",
     },
   ];
@@ -52,30 +52,57 @@ const Working = () => {
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 justify-items-center">
           {steps.map((step) => (
-            <div key={step.id} className="flex flex-col items-center">
-              
-              <div
-                className={`${step.cardBg} w-[260px] h-[260px] rounded-[2.5rem] flex items-center justify-center mb-8`}
-              >
-                <img
-                  src={step.image}
-                  alt={step.title}
-                  className="w-[85%] h-[85%] object-contain mix-blend-multiply"
-                />
-              </div>
+  <div
+    key={step.id}
+    className="flex flex-col items-center group transition-all duration-300"
+  >
+    {/* Image Card */}
+    <div
+      className={`${step.cardBg} w-[260px] h-[260px] rounded-[2.5rem] 
+      flex items-center justify-center mb-8
+      transition-all duration-500 ease-out
+      group-hover:-translate-y-3 
+      group-hover:shadow-[0_25px_50px_rgba(0,0,0,0.15)]`}
+    >
+      <img
+        src={step.image}
+        alt={step.title}
+        className="w-[85%] h-[85%] object-contain mix-blend-multiply
+        transition-transform duration-500
+        group-hover:scale-105"
+      />
+    </div>
 
-              <div className="bg-[#6366F1] text-white w-11 h-11 rounded-full flex items-center justify-center text-lg font-bold mb-4">
-                {step.id}
-              </div>
+    {/* Step Number */}
+    <div
+      className="bg-[#6366F1] text-white w-11 h-11 rounded-full 
+      flex items-center justify-center text-lg font-bold mb-4
+      transition-all duration-300
+      group-hover:scale-110 group-hover:shadow-lg"
+    >
+      {step.id}
+    </div>
 
-              <h3 className="text-xl font-bold text-[#1A1A1A] mb-2 text-center">
-                {step.title}
-              </h3>
-              <p className="text-[#666] text-center text-sm leading-relaxed max-w-xs">
-                {step.description}
-              </p>
-            </div>
-          ))}
+    {/* Title */}
+    <h3
+      className="text-xl font-bold text-[#1A1A1A] mb-2 text-center
+      transition-colors duration-300
+      group-hover:text-[#6366F1]"
+    >
+      {step.title}
+    </h3>
+
+    {/* Description */}
+    <p
+      className="text-[#666] text-center text-sm leading-relaxed max-w-xs
+      transition-colors duration-300
+      group-hover:text-[#333]"
+    >
+      {step.description}
+    </p>
+  </div>
+))}
+
         </div>
 
       </div>
