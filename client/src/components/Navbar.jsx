@@ -49,11 +49,10 @@ function Navbar() {
     <>
       {/* ================= NAVBAR ================= */}
       <nav
-        className={`fixed top-0 w-full z-[100] transition-all duration-500 ${
-          scrolled
+        className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled
             ? "py-3 bg-white/90 backdrop-blur-xl shadow border-b border-gray-100"
             : "py-6 bg-transparent"
-        }`}
+          }`}
       >
         <div className="max-w-7xl mx-auto px-6 md:px-16 lg:px-24 flex items-center justify-between">
 
