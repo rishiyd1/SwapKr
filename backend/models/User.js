@@ -7,6 +7,10 @@ const User = sequelize.define('User', {
         autoIncrement: true,
         primaryKey: true,
     },
+    name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+    },
     email: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -15,42 +19,29 @@ const User = sequelize.define('User', {
             isEmail: true,
         }
     },
-    firstName: {
+    college: {
         type: DataTypes.STRING,
-        allowNull: false,
     },
-    lastName: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    phone: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    branch: {
+    department: {
         type: DataTypes.STRING,
     },
     year: {
         type: DataTypes.INTEGER,
     },
-    hostel: {
-        type: DataTypes.STRING,
+    subLocation: {
+        type: DataTypes.STRING, // Hostel/Block
     },
-    tokens: {
-        type: DataTypes.INTEGER,
-        defaultValue: 50,
+    trustScore: {
+        type: DataTypes.FLOAT,
+        defaultValue: 50.0, // Internal - not visible to users
     },
-    lastResetAt: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW,
-    },
-    isBlocked: {
+    isVerified: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
     },
 }, {
     tableName: 'users',
-    timestamps: true
+    timestamps: true // Adds createdAt & updatedAt
 });
 
 module.exports = User;
