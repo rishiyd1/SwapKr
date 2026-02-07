@@ -18,6 +18,10 @@ exports.createItem = async (req, res) => {
         });
 
         // Handle images if any (assuming array of URLs passed)
+        if (!images || images.length < 2) {
+            return res.status(400).json({ message: 'At least 2 images are required' });
+        }
+
         if (images && images.length > 0) {
             const imagePromises = images.map(url => ItemImage.create({ itemId: newItem.id, imageUrl: url }));
             await Promise.all(imagePromises);
