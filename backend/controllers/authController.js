@@ -122,11 +122,16 @@ exports.verifyOTPAndLogin = async (req, res) => {
 // POST /api/auth/register
 // Complete registration for new users (after OTP verification)
 exports.register = async (req, res) => {
-    const { email, name, college, department, year, subLocation } = req.body;
+    const { email, name, department, year, hostel, phoneNumber } = req.body;
 
     // Validate required fields
-    if (!email || !name) {
-        return res.status(400).json({ message: 'Email and name are required' });
+    if (!email || !name || !phoneNumber) {
+        return res.status(400).json({ message: 'Email, name, and phone number are required' });
+    }
+
+    // Validate phone number format (10 digits)
+    if (!/^[0-9]{10}$/.test(phoneNumber)) {
+        return res.status(400).json({ message: 'Phone number must be exactly 10 digits' });
     }
 
     try {
@@ -140,12 +145,11 @@ exports.register = async (req, res) => {
         const user = await User.create({
             email,
             name,
-            college,
             department,
             year,
-            subLocation,
+            hostel,
+            phoneNumber,
             isVerified: true, // Verified via OTP
-            trustScore: 50.0  // Default trust score
         });
 
         const token = jwt.sign(
@@ -170,9 +174,7 @@ exports.register = async (req, res) => {
 // Get current user's profile (protected route)
 exports.getProfile = async (req, res) => {
     try {
-        const user = await User.findByPk(req.user.id, {
-            attributes: { exclude: ['trustScore'] } // Hide internal trust score
-        });
+        const user = await User.findByPk(req.user.id);
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -188,7 +190,7 @@ exports.getProfile = async (req, res) => {
 // PUT /api/auth/profile
 // Update current user's profile (protected route)
 exports.updateProfile = async (req, res) => {
-    const { name, college, department, year, subLocation } = req.body;
+    const { name, department, year, hostel, phoneNumber } = req.body;
 
     try {
         const user = await User.findByPk(req.user.id);
@@ -199,11 +201,15 @@ exports.updateProfile = async (req, res) => {
 
         // Update fields if provided
         if (name) user.name = name;
-        if (college) user.college = college;
         if (department) user.department = department;
         if (year) user.year = year;
-        if (subLocation) user.subLocation = subLocation;
-
+        if (hostel) user.hostel = hostel;
+        if (phoneNumber) {
+            if (!/^[0-9]{10}$/.test(phoneNumber)) {
+                return res.status(400).json({ message: 'Phone number must be exactly 10 digits' });
+            }
+            user.phoneNumber = phoneNumber;
+        }
         await user.save();
 
         res.status(200).json({

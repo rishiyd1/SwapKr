@@ -14,6 +14,7 @@ const Item = sequelize.define('Item', {
     },
     description: {
         type: DataTypes.TEXT,
+        allowNull: false,
     },
     price: {
         type: DataTypes.DECIMAL(10, 2),
@@ -31,7 +32,7 @@ const Item = sequelize.define('Item', {
         type: DataTypes.INTEGER,
     },
     status: {
-        type: DataTypes.ENUM('Available', 'Sold', 'Borrowed'),
+        type: DataTypes.ENUM('Available', 'Sold', 'pending'),
         defaultValue: 'Available',
     },
 }, {
