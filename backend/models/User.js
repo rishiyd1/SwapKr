@@ -27,7 +27,6 @@ const User = sequelize.define('User', {
             is: /^[0-9]{10}$/ // Exactly 10 digits
         }
     },
-
     department: {
         type: DataTypes.STRING,
     },

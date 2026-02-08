@@ -204,8 +204,12 @@ exports.updateProfile = async (req, res) => {
         if (department) user.department = department;
         if (year) user.year = year;
         if (hostel) user.hostel = hostel;
-        if (phoneNumber) user.phoneNumber = phoneNumber;
-
+        if (phoneNumber) {
+            if (!/^[0-9]{10}$/.test(phoneNumber)) {
+                return res.status(400).json({ message: 'Phone number must be exactly 10 digits' });
+            }
+            user.phoneNumber = phoneNumber;
+        }
         await user.save();
 
         res.status(200).json({
