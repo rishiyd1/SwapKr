@@ -34,11 +34,23 @@ exports.createRequest = async (req, res) => {
             status: 'Open'
         });
 
-        // If Urgent, logic to "post to all users through email"
+        // If Urgent, broadcast to all users
         if (type === 'Urgent') {
-            // TODO: Implement broadcast email logic here
-            // keeping it simple for now, maybe just console log or call a utility
-            console.log(`URGENT REQUEST BROADCAST: ${title} by ${user.email}`);
+            const { sendBroadcastEmail } = require('../utils/broadcast');
+
+            // Find all users except requester
+            const allUsers = await User.findAll({
+                where: {
+                    id: { [Op.ne]: requesterId },
+                    email: { [Op.ne]: null } // Ensure email exists
+                },
+                attributes: ['email', 'name']
+            });
+
+            // Trigger broadcast (fire and forget to not block response? Or await?)
+            // We'll await it for simplicity in dev, or just not await to be fast.
+            // Let's not await it so the user gets a fast response.
+            sendBroadcastEmail(allUsers, { title, description });
         }
 
         res.status(201).json({ message: 'Request posted successfully', request: newRequest, remainingTokens: user.tokens });
