@@ -29,6 +29,11 @@ const User = sequelize.define('User', {
     hostel: {
         type: DataTypes.STRING, // Hostel/Block
     },
+    tokens: {
+        type: DataTypes.INTEGER,
+        defaultValue: 50,
+        allowNull: false,
+    },
 
     isVerified: {
         type: DataTypes.BOOLEAN,
