@@ -122,7 +122,7 @@ exports.verifyOTPAndLogin = async (req, res) => {
 // POST /api/auth/register
 // Complete registration for new users (after OTP verification)
 exports.register = async (req, res) => {
-    const { email, name, college, department, year, subLocation } = req.body;
+    const { email, name, department, year, subLocation } = req.body;
 
     // Validate required fields
     if (!email || !name) {
@@ -140,7 +140,6 @@ exports.register = async (req, res) => {
         const user = await User.create({
             email,
             name,
-            college,
             department,
             year,
             subLocation,
@@ -188,7 +187,7 @@ exports.getProfile = async (req, res) => {
 // PUT /api/auth/profile
 // Update current user's profile (protected route)
 exports.updateProfile = async (req, res) => {
-    const { name, college, department, year, subLocation } = req.body;
+    const { name, department, year, subLocation } = req.body;
 
     try {
         const user = await User.findByPk(req.user.id);
@@ -199,7 +198,6 @@ exports.updateProfile = async (req, res) => {
 
         // Update fields if provided
         if (name) user.name = name;
-        if (college) user.college = college;
         if (department) user.department = department;
         if (year) user.year = year;
         if (subLocation) user.subLocation = subLocation;

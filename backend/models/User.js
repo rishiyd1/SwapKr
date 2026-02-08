@@ -19,9 +19,7 @@ const User = sequelize.define('User', {
             isEmail: true,
         }
     },
-    college: {
-        type: DataTypes.STRING,
-    },
+
     department: {
         type: DataTypes.STRING,
     },
