@@ -19,6 +19,14 @@ const User = sequelize.define('User', {
             isEmail: true,
         }
     },
+    phoneNumber: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+        validate: {
+            is: /^[0-9]{10}$/ // Exactly 10 digits
+        }
+    },
 
     department: {
         type: DataTypes.STRING,
