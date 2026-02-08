@@ -1,6 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const User = require('./User'); // Import User for association
+const User = require('./User');
 
 const Item = sequelize.define('Item', {
     id: {
@@ -20,16 +20,12 @@ const Item = sequelize.define('Item', {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
     },
-    type: {
-        type: DataTypes.ENUM('Sell', 'Borrow', 'Donate'), // Added Donate just in case, sticking to Sell/Borrow mainly
-        allowNull: false,
+    category: {
+        type: DataTypes.ENUM('Equipments', 'Daily Use', 'Academics', 'Sports', 'Others'),
+        defaultValue: 'Others'
     },
-    category: { // Adding category as it's useful
+    pickupLocation: {
         type: DataTypes.STRING,
-        defaultValue: 'General'
-    },
-    yearOfPurchase: {
-        type: DataTypes.INTEGER,
     },
     status: {
         type: DataTypes.ENUM('Available', 'Sold', 'pending'),

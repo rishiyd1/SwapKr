@@ -7,7 +7,6 @@ require('dotenv').config();
 // Key: email, Value: { otp, expiresAt }
 const otpStore = {};
 
-// DEV MODE: Set to true to return OTP in response (for testing without email)
 const DEV_MODE = true;
 
 // POST /api/auth/send-otp
