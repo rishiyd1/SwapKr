@@ -7,7 +7,10 @@ const authenticateToken = require('../middleware/auth');
 router.get('/', itemController.getItems);
 router.get('/:id', itemController.getItemById);
 
-// Protected routes (Creating items)
+// Protected routes (Require login)
 router.post('/', authenticateToken, itemController.createItem);
+router.put('/:id', authenticateToken, itemController.updateItem);
+router.delete('/:id', authenticateToken, itemController.deleteItem);
+router.get('/user/my-listings', authenticateToken, itemController.getMyListings);
 
 module.exports = router;
