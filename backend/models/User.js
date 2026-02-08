@@ -26,7 +26,7 @@ const User = sequelize.define('User', {
     year: {
         type: DataTypes.INTEGER,
     },
-    subLocation: {
+    hostel: {
         type: DataTypes.STRING, // Hostel/Block
     },
     trustScore: {
