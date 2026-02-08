@@ -29,10 +29,7 @@ const User = sequelize.define('User', {
     hostel: {
         type: DataTypes.STRING, // Hostel/Block
     },
-    trustScore: {
-        type: DataTypes.FLOAT,
-        defaultValue: 50.0, // Internal - not visible to users
-    },
+
     isVerified: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,

@@ -144,7 +144,6 @@ exports.register = async (req, res) => {
             year,
             hostel,
             isVerified: true, // Verified via OTP
-            trustScore: 50.0  // Default trust score
         });
 
         const token = jwt.sign(
@@ -169,9 +168,7 @@ exports.register = async (req, res) => {
 // Get current user's profile (protected route)
 exports.getProfile = async (req, res) => {
     try {
-        const user = await User.findByPk(req.user.id, {
-            attributes: { exclude: ['trustScore'] } // Hide internal trust score
-        });
+        const user = await User.findByPk(req.user.id);
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
