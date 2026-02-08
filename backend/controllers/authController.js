@@ -7,7 +7,6 @@ require('dotenv').config();
 // Key: email, Value: { otp, expiresAt }
 const otpStore = {};
 
-// DEV MODE: Set to true to return OTP in response (for testing without email)
 const DEV_MODE = true;
 
 // POST /api/auth/send-otp
@@ -122,7 +121,7 @@ exports.verifyOTPAndLogin = async (req, res) => {
 // POST /api/auth/register
 // Complete registration for new users (after OTP verification)
 exports.register = async (req, res) => {
-    const { email, name, college, department, year, subLocation } = req.body;
+    const { email, name, college, department, year, hostel } = req.body;
 
     // Validate required fields
     if (!email || !name) {
@@ -143,7 +142,7 @@ exports.register = async (req, res) => {
             college,
             department,
             year,
-            subLocation,
+            hostel,
             isVerified: true, // Verified via OTP
             trustScore: 50.0  // Default trust score
         });
@@ -188,7 +187,7 @@ exports.getProfile = async (req, res) => {
 // PUT /api/auth/profile
 // Update current user's profile (protected route)
 exports.updateProfile = async (req, res) => {
-    const { name, college, department, year, subLocation } = req.body;
+    const { name, college, department, year, hostel } = req.body;
 
     try {
         const user = await User.findByPk(req.user.id);
@@ -202,7 +201,7 @@ exports.updateProfile = async (req, res) => {
         if (college) user.college = college;
         if (department) user.department = department;
         if (year) user.year = year;
-        if (subLocation) user.subLocation = subLocation;
+        if (hostel) user.hostel = hostel;
 
         await user.save();
 
