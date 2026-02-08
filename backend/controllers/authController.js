@@ -199,6 +199,7 @@ exports.updateProfile = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+
         // Update fields if provided
         if (name) user.name = name;
         if (department) user.department = department;
