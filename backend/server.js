@@ -36,8 +36,9 @@ const startServer = async () => {
         await sequelize.authenticate();
         console.log('Database connected successfully.');
 
-        // Sync models (force: false creates table if not exists, doesn't drop)
-        // await sequelize.sync({ force: false }); 
+        // Sync models (alter: true updates table schema without dropping data)
+        await sequelize.sync({ alter: true });
+        console.log('Database tables synced.');
 
         app.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
