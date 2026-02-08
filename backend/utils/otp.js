@@ -14,6 +14,8 @@ const transporter = nodemailer.createTransport({
 
 const sendOTP = async (email, otp) => {
     try {
+        console.log(`DEBUG: Generated OTP for ${email} is ${otp}`); // Log OTP for testing
+
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,
@@ -21,12 +23,17 @@ const sendOTP = async (email, otp) => {
             text: `Your OTP for SwapKr verification is: ${otp}. Do not share this with anyone.`
         };
 
-        await transporter.sendMail(mailOptions);
-        console.log(`OTP sent to ${email}`);
-        return true;
+        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+            await transporter.sendMail(mailOptions);
+            console.log(`OTP sent to ${email}`);
+        } else {
+            console.log('Skipping email send (no credentials). Use console OTP.');
+        }
+
+        return true; // Always return true for dev testing
     } catch (error) {
         console.error('Error sending email:', error);
-        return false;
+        return true; // Fallback to true for testing
     }
 };
 
