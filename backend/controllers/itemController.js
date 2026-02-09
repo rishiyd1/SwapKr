@@ -64,7 +64,7 @@ exports.getItems = async (req, res) => {
         const items = await Item.findAll({
             where,
             include: [
-                { model: User, as: 'seller', attributes: ['id', 'name', 'email', 'hostel', 'trustScore'] },
+                { model: User, as: 'seller', attributes: ['id', 'name', 'email', 'hostel', 'phoneNumber'] },
                 { model: ItemImage, as: 'images' }
             ],
             order: [['createdAt', 'DESC']] // Most recent first
@@ -82,7 +82,7 @@ exports.getItemById = async (req, res) => {
     try {
         const item = await Item.findByPk(req.params.id, {
             include: [
-                { model: User, as: 'seller', attributes: ['id', 'name', 'email', 'hostel', 'college', 'department'] },
+                { model: User, as: 'seller', attributes: ['id', 'name', 'email', 'hostel', 'department', 'phoneNumber'] },
                 { model: ItemImage, as: 'images' }
             ]
         });
