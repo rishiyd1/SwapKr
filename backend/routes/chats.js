@@ -13,12 +13,12 @@ router.post('/start', chatController.startConversation);
 router.get('/', chatController.getMyConversations);
 
 // Get single conversation details
-router.get('/:conversationId', chatController.getConversation);
+router.get('/:chatId', chatController.getConversation);
 
 // Get messages in a conversation
-router.get('/:conversationId/messages', chatController.getMessages);
+router.get('/:chatId/messages', chatController.getMessages);
 
 // Send a message
-router.post('/:conversationId/messages', chatController.sendMessage);
+router.post('/:chatId/messages', chatController.sendMessage);
 
 module.exports = router;
