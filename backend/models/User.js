@@ -19,8 +19,13 @@ const User = sequelize.define('User', {
             isEmail: true,
         }
     },
-    college: {
+    phoneNumber: {
         type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+        validate: {
+            is: /^[0-9]{10}$/ // Exactly 10 digits
+        }
     },
     department: {
         type: DataTypes.STRING,
@@ -29,12 +34,14 @@ const User = sequelize.define('User', {
         type: DataTypes.INTEGER,
     },
     hostel: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING, // Hostel/Block
     },
-    trustScore: {
-        type: DataTypes.FLOAT,
-        defaultValue: 50.0, // Internal - not visible to users
+    tokens: {
+        type: DataTypes.INTEGER,
+        defaultValue: 50,
+        allowNull: false,
     },
+
     isVerified: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
