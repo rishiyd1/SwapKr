@@ -14,7 +14,6 @@ const Item = sequelize.define('Item', {
     },
     description: {
         type: DataTypes.TEXT,
-        allowNull: false,
     },
     price: {
         type: DataTypes.DECIMAL(10, 2),
@@ -28,8 +27,8 @@ const Item = sequelize.define('Item', {
         type: DataTypes.STRING,
     },
     status: {
-        type: DataTypes.ENUM('Available', 'Sold', 'pending'),
-        defaultValue: 'Available',
+        type: DataTypes.ENUM('Active', 'Reserved', 'Sold'),
+        defaultValue: 'Active',
     },
 }, {
     tableName: 'items',
