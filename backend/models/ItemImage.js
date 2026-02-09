@@ -8,17 +8,20 @@ const ItemImage = sequelize.define('ItemImage', {
         autoIncrement: true,
         primaryKey: true,
     },
+    itemId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
     imageUrl: {
         type: DataTypes.STRING,
         allowNull: false,
     },
 }, {
-    tableName: 'item_images',
+    tableName: 'item_images', 
     timestamps: true
 });
 
 // Associations
-ItemImage.belongsTo(Item, { foreignKey: 'itemId', as: 'item' });
-Item.hasMany(ItemImage, { foreignKey: 'itemId', as: 'images' });
+// Defined in index.js to avoid circular dependencies
 
 module.exports = ItemImage;

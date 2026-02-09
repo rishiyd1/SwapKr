@@ -19,7 +19,7 @@ exports.createItem = async (req, res) => {
             category: category || 'Others',
             pickupLocation,
             sellerId,
-            status: 'Active'
+            status: 'Available'
         });
 
         // Handle images if any (array of URLs)
@@ -44,7 +44,7 @@ exports.createItem = async (req, res) => {
 exports.getItems = async (req, res) => {
     try {
         const { search, category, minPrice, maxPrice, status } = req.query;
-        let where = { status: status || 'Active' };
+        let where = { status: status || 'Available' };
 
         // Search by title
         if (search) {
@@ -165,6 +165,7 @@ exports.getMyListings = async (req, res) => {
         });
 
         res.status(200).json(items);
+
     } catch (error) {
         console.error('Get My Listings Error:', error);
         res.status(500).json({ message: 'Error fetching listings', error: error.message });

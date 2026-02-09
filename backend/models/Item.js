@@ -8,6 +8,10 @@ const Item = sequelize.define('Item', {
         autoIncrement: true,
         primaryKey: true,
     },
+    sellerId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
     title: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -28,7 +32,7 @@ const Item = sequelize.define('Item', {
         type: DataTypes.STRING,
     },
     status: {
-        type: DataTypes.ENUM('Available', 'Sold', 'pending'),
+        type: DataTypes.ENUM('Available', 'Sold', 'processing'),
         defaultValue: 'Available',
     },
 }, {
@@ -37,7 +41,6 @@ const Item = sequelize.define('Item', {
 });
 
 // Associations
-Item.belongsTo(User, { foreignKey: 'sellerId', as: 'seller' });
-User.hasMany(Item, { foreignKey: 'sellerId', as: 'items' });
+// Defined in index.js to avoid circular dependencies
 
 module.exports = Item;
