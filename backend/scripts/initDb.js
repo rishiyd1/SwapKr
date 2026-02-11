@@ -1,5 +1,6 @@
-const { Client } = require('pg');
-require('dotenv').config();
+import { Client } from 'pg';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const dbName = process.env.DB_NAME || 'swapkr';
 const config = {

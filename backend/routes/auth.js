@@ -1,15 +1,29 @@
-const express = require('express');
+import express from 'express';
+import * as authController from '../controllers/authController.js';
+import authenticateToken from '../middleware/auth.js';
+
 const router = express.Router();
-const authController = require('../controllers/authController');
-const authenticateToken = require('../middleware/auth');
 
-// Public routes
-router.post('/send-otp', authController.sendVerificationOTP);
-router.post('/verify-otp', authController.verifyOTPAndLogin);
-router.post('/register', authController.register);
+// ==========================================
+// Public Routes (no authentication required)
+// ==========================================
 
-// Protected routes (require login)
+// Registration & Verification
+router.post('/register', authController.registerUser);
+router.post('/verify-otp', authController.verifyOtp);
+router.post('/resend-otp', authController.resendOtp);
+
+// Login
+router.post('/login', authController.loginUser);
+
+// Password Reset
+router.post('/send-reset-otp', authController.sendResetOtp);
+router.post('/reset-password', authController.resetPassword);
+
+// ==========================================
+// Protected Routes (require authentication)
+// ==========================================
 router.get('/profile', authenticateToken, authController.getProfile);
 router.put('/profile', authenticateToken, authController.updateProfile);
 
-module.exports = router;
+export default router;

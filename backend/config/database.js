@@ -1,5 +1,6 @@
-const { Sequelize } = require('sequelize');
-require('dotenv').config();
+import { Sequelize } from 'sequelize';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // SQLite Configuration
 const sequelize = new Sequelize({
@@ -8,4 +9,4 @@ const sequelize = new Sequelize({
     logging: false
 });
 
-module.exports = sequelize;
+export default sequelize;

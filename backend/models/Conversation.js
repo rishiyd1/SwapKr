@@ -1,7 +1,7 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
-const User = require('./User');
-const Item = require('./Item');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
+import User from './User.js';
+import Item from './Item.js';
 
 // Conversation = A chat thread between two users about an item
 const Conversation = sequelize.define('Conversation', {
@@ -28,4 +28,4 @@ Conversation.belongsTo(User, { foreignKey: 'buyerId', as: 'buyer' });
 Conversation.belongsTo(User, { foreignKey: 'sellerId', as: 'seller' });
 Conversation.belongsTo(Item, { foreignKey: 'itemId', as: 'item' });
 
-module.exports = Conversation;
+export default Conversation;

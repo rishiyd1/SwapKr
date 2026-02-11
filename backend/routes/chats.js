@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import * as chatController from '../controllers/chatController.js';
+import authenticateToken from '../middleware/auth.js';
+
 const router = express.Router();
-const chatController = require('../controllers/chatController');
-const authenticateToken = require('../middleware/auth');
 
 // All chat routes require authentication
 router.use(authenticateToken);
@@ -21,4 +22,4 @@ router.get('/:conversationId/messages', chatController.getMessages);
 // Send a message
 router.post('/:conversationId/messages', chatController.sendMessage);
 
-module.exports = router;
+export default router;

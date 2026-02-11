@@ -1,18 +1,18 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const { sequelize } = require('./models');
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { sequelize } from './models/index.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const authRoutes = require('./routes/auth');
-const itemRoutes = require('./routes/items');
-const requestRoutes = require('./routes/requests');
-const chatRoutes = require('./routes/chats');
-require('./jobs/tokenReset'); // Initialize cron job
+import authRoutes from './routes/auth.js';
+import itemRoutes from './routes/items.js';
+import requestRoutes from './routes/requests.js';
+import chatRoutes from './routes/chats.js';
+import './jobs/tokenReset.js'; // Initialize cron job
 
 // Middleware
 app.use(cors());
@@ -50,4 +50,4 @@ const startServer = async () => {
 
 startServer();
 
-module.exports = app;
+export default app;

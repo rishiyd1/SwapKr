@@ -1,8 +1,8 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
-const User = require('./User');
-const Item = require('./Item');
-const Request = require('./Request');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
+import User from './User.js';
+import Item from './Item.js';
+import Request from './Request.js';
 
 const Chat = sequelize.define('Chat', {
     id: {
@@ -32,4 +32,4 @@ Chat.belongsTo(User, { foreignKey: 'receiverId', as: 'receiver' });
 Chat.belongsTo(Item, { foreignKey: 'itemId', as: 'item' });
 Chat.belongsTo(Request, { foreignKey: 'requestId', as: 'request' }); // Can be null if it's item based
 
-module.exports = Chat;
+export default Chat;

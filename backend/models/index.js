@@ -1,10 +1,10 @@
-const sequelize = require('../config/database');
-const User = require('./User');
-const Item = require('./Item');
-const Request = require('./Request');
-const ItemImage = require('./ItemImage');
-const Conversation = require('./Conversation');
-const Message = require('./Message');
+import sequelize from '../config/database.js';
+import User from './User.js';
+import Item from './Item.js';
+import Request from './Request.js';
+import ItemImage from './ItemImage.js';
+import Conversation from './Conversation.js';
+import Message from './Message.js';
 
 // Additional associations
 Conversation.hasMany(Message, { foreignKey: 'conversationId', as: 'messages' });
@@ -19,7 +19,7 @@ Item.hasMany(ItemImage, { foreignKey: 'itemId', as: 'images' });
 ItemImage.belongsTo(Item, { foreignKey: 'itemId', as: 'item' });
 
 // Export all models and sequelize instance
-module.exports = {
+export {
     sequelize,
     User,
     Item,

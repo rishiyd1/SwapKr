@@ -1,8 +1,9 @@
-const { Request, User } = require('../models');
-const { Op } = require('sequelize');
+import { Request, User } from '../models/index.js';
+import { Op } from 'sequelize';
+import { sendBroadcastEmail } from '../utils/broadcast.js';
 
 // Create a Request (Urgent deducts tokens)
-exports.createRequest = async (req, res) => {
+export const createRequest = async (req, res) => {
     try {
         const { title, description, type } = req.body;
         const requesterId = req.user.id;
@@ -10,8 +11,6 @@ exports.createRequest = async (req, res) => {
         let tokenCost = 0;
         if (type === 'Urgent') {
             tokenCost = 25;
-        } else {
-            // Default to Normal if not specified
         }
 
         const user = await User.findByPk(requesterId);
@@ -36,8 +35,6 @@ exports.createRequest = async (req, res) => {
 
         // If Urgent, broadcast to all users
         if (type === 'Urgent') {
-            const { sendBroadcastEmail } = require('../utils/broadcast');
-
             // Find all users except requester
             const allUsers = await User.findAll({
                 where: {
@@ -47,9 +44,7 @@ exports.createRequest = async (req, res) => {
                 attributes: ['email', 'name']
             });
 
-            // Trigger broadcast (fire and forget to not block response? Or await?)
-            // We'll await it for simplicity in dev, or just not await to be fast.
-            // Let's not await it so the user gets a fast response.
+            // Trigger broadcast (fire and forget)
             sendBroadcastEmail(allUsers, { title, description });
         }
 
@@ -61,20 +56,16 @@ exports.createRequest = async (req, res) => {
     }
 };
 
-exports.getRequests = async (req, res) => {
+export const getRequests = async (req, res) => {
     try {
         const requests = await Request.findAll({
             where: { status: 'Open' },
             include: [
-                { model: User, as: 'requester', attributes: ['id', 'firstName', 'lastName', 'email'] }
+                { model: User, as: 'requester', attributes: ['id', 'name', 'email'] }
             ],
-            order: [['isUrgent', 'DESC'], ['createdAt', 'DESC']] // Urgent first? or just createdAt. Model has 'type' not 'isUrgent' boolean, wait.
-            // in Model I defined: type: ENUM('Urgent', 'Normal').
-            // So i should order by that.
+            order: [['type', 'DESC'], ['createdAt', 'DESC']]
         });
 
-        // Custom sort in JS if needed, or order by type
-        // 'Urgent' > 'Normal' alphabetically? No. U > N. So DESC works.
         res.status(200).json(requests);
     } catch (error) {
         res.status(500).json({ error: error.message });

@@ -1,8 +1,8 @@
-const { Conversation, Message, User, Item } = require('../models');
-const { Op } = require('sequelize');
+import { Conversation, Message, User, Item } from '../models/index.js';
+import { Op } from 'sequelize';
 
 // POST /api/chat/start - Start a conversation about an item
-exports.startConversation = async (req, res) => {
+export const startConversation = async (req, res) => {
     try {
         const { itemId, sellerId } = req.body;
         const buyerId = req.user.id;
@@ -54,7 +54,7 @@ exports.startConversation = async (req, res) => {
 };
 
 // GET /api/chat - Get all my conversations
-exports.getMyConversations = async (req, res) => {
+export const getMyConversations = async (req, res) => {
     try {
         const userId = req.user.id;
 
@@ -81,7 +81,7 @@ exports.getMyConversations = async (req, res) => {
 };
 
 // GET /api/chat/:conversationId/messages - Get messages in a conversation
-exports.getMessages = async (req, res) => {
+export const getMessages = async (req, res) => {
     try {
         const { conversationId } = req.params;
         const userId = req.user.id;
@@ -117,7 +117,7 @@ exports.getMessages = async (req, res) => {
 };
 
 // POST /api/chat/:conversationId/messages - Send a message
-exports.sendMessage = async (req, res) => {
+export const sendMessage = async (req, res) => {
     try {
         const { conversationId } = req.params;
         const { content } = req.body;
@@ -163,7 +163,7 @@ exports.sendMessage = async (req, res) => {
 };
 
 // GET /api/chat/:conversationId - Get single conversation details
-exports.getConversation = async (req, res) => {
+export const getConversation = async (req, res) => {
     try {
         const { conversationId } = req.params;
         const userId = req.user.id;

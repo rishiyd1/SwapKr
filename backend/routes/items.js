@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import * as itemController from '../controllers/itemController.js';
+import authenticateToken from '../middleware/auth.js';
+
 const router = express.Router();
-const itemController = require('../controllers/itemController');
-const authenticateToken = require('../middleware/auth');
 
 // Public routes (Viewing items)
 router.get('/', itemController.getItems);
@@ -13,4 +14,4 @@ router.put('/:id', authenticateToken, itemController.updateItem);
 router.delete('/:id', authenticateToken, itemController.deleteItem);
 router.get('/user/my-listings', authenticateToken, itemController.getMyListings);
 
-module.exports = router;
+export default router;

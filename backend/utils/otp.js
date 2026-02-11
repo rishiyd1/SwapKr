@@ -1,44 +1,42 @@
-const nodemailer = require('nodemailer');
-require('dotenv').config();
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Create transporter
-// NOTE: For development, we are using a placeholder. 
-// In production, use environment variables for SERVICE, EMAIL, and PASSWORD.
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // or your preferred service
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
     }
 });
 
-const sendOTP = async (email, otp) => {
+export const sendOTP = async (email, otp) => {
     try {
-        console.log(`DEBUG: Generated OTP for ${email} is ${otp}`); // Log OTP for testing
+        console.log(`DEBUG: Generated OTP for ${email} is ${otp}`);
 
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: process.env.SMTP_USER,
             to: email,
-            subject: 'SwapKr Verification OTP',
-            text: `Your OTP for SwapKr verification is: ${otp}. Do not share this with anyone.`
+            subject: 'CampusXchange Verification OTP',
+            text: `Your OTP for CampusXchange verification is: ${otp}. Do not share this with anyone.`
         };
 
-        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+        if (process.env.SMTP_USER && process.env.SMTP_PASS) {
             await transporter.sendMail(mailOptions);
             console.log(`OTP sent to ${email}`);
         } else {
             console.log('Skipping email send (no credentials). Use console OTP.');
         }
 
-        return true; // Always return true for dev testing
+        return true;
     } catch (error) {
         console.error('Error sending email:', error);
         return true; // Fallback to true for testing
     }
 };
 
-const generateOTP = () => {
+export const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
-
-module.exports = { sendOTP, generateOTP };
