@@ -14,12 +14,12 @@ router.post('/start', chatController.startConversation);
 router.get('/', chatController.getMyConversations);
 
 // Get single conversation details
-router.get('/:chatId', chatController.getConversation);
+router.get('/:conversationId', chatController.getConversation);
 
 // Get messages in a conversation
-router.get('/:chatId/messages', chatController.getMessages);
+router.get('/:conversationId/messages', chatController.getMessages);
 
 // Send a message
-router.post('/:chatId/messages', chatController.sendMessage);
+router.post('/:conversationId/messages', chatController.sendMessage);
 
 export default router;

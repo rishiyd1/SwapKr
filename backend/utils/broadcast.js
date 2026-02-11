@@ -1,18 +1,20 @@
-const nodemailer = require('nodemailer');
-require('dotenv').config();
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Reusing the transporter configuration from otp.js logic
-// In a real app, exact config should be shared via a config file
+// Reusing the transporter configuration
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
     auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
     }
 });
 
-const sendBroadcastEmail = async (users, requestDetails) => {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+export const sendBroadcastEmail = async (users, requestDetails) => {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
         console.log('Skipping broadcast (no credentials).');
         console.log(`[MOCK BROADCAST] To ${users.length} users: New Request "${requestDetails.title}"`);
         return;
@@ -20,15 +22,12 @@ const sendBroadcastEmail = async (users, requestDetails) => {
 
     console.log(`Starting broadcast to ${users.length} users...`);
 
-    // In production, use a queue (BullMQ/Redis).
-    // Here we just loop.
-
     const emailPromises = users.map(user => {
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: process.env.SMTP_USER,
             to: user.email,
             subject: `📢 Urgent Request: ${requestDetails.title}`,
-            text: `Hello ${user.name},\n\nA new URGENT request has been posted on SwapKr!\n\nTitle: ${requestDetails.title}\nDescription: ${requestDetails.description}\n\nCan you help? Log in to SwapKr to respond!\n\n- The SwapKr Team`
+            text: `Hello ${user.name},\n\nA new URGENT request has been posted on CampusXchange!\n\nTitle: ${requestDetails.title}\nDescription: ${requestDetails.description}\n\nCan you help? Log in to CampusXchange to respond!\n\n- The CampusXchange Team`
         };
 
         return transporter.sendMail(mailOptions).catch(err => {
@@ -43,5 +42,3 @@ const sendBroadcastEmail = async (users, requestDetails) => {
         console.error('Error in broadcast:', error);
     }
 };
-
-module.exports = { sendBroadcastEmail };

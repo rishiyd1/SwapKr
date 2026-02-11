@@ -1,8 +1,8 @@
-const { Item, User, ItemImage } = require('../models');
-const { Op } = require('sequelize');
+import { Item, User, ItemImage } from '../models/index.js';
+import { Op } from 'sequelize';
 
 // POST /api/items - Create a new listing
-exports.createItem = async (req, res) => {
+export const createItem = async (req, res) => {
     try {
         const { title, description, price, category, pickupLocation, images } = req.body;
         const sellerId = req.user.id; // From auth middleware
@@ -41,7 +41,7 @@ exports.createItem = async (req, res) => {
 };
 
 // GET /api/items - Get all listings (with filters)
-exports.getItems = async (req, res) => {
+export const getItems = async (req, res) => {
     try {
         const { search, category, minPrice, maxPrice, status } = req.query;
         let where = { status: status || 'Available' };
@@ -78,7 +78,7 @@ exports.getItems = async (req, res) => {
 };
 
 // GET /api/items/:id - Get single listing
-exports.getItemById = async (req, res) => {
+export const getItemById = async (req, res) => {
     try {
         const item = await Item.findByPk(req.params.id, {
             include: [
@@ -99,7 +99,7 @@ exports.getItemById = async (req, res) => {
 };
 
 // PUT /api/items/:id - Update listing
-exports.updateItem = async (req, res) => {
+export const updateItem = async (req, res) => {
     try {
         const { title, description, price, category, pickupLocation, status } = req.body;
         const item = await Item.findByPk(req.params.id);
@@ -131,7 +131,7 @@ exports.updateItem = async (req, res) => {
 };
 
 // DELETE /api/items/:id - Delete listing
-exports.deleteItem = async (req, res) => {
+export const deleteItem = async (req, res) => {
     try {
         const item = await Item.findByPk(req.params.id);
 
@@ -156,7 +156,7 @@ exports.deleteItem = async (req, res) => {
 };
 
 // GET /api/items/my-listings - Get current user's listings
-exports.getMyListings = async (req, res) => {
+export const getMyListings = async (req, res) => {
     try {
         const items = await Item.findAll({
             where: { sellerId: req.user.id },

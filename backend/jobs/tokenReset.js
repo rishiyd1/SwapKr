@@ -1,6 +1,5 @@
-const cron = require('node-cron');
-const { User, sequelize } = require('../models');
-const { Op } = require('sequelize');
+import cron from 'node-cron';
+import { User } from '../models/index.js';
 
 // Run on the 1st of every month at midnight
 const job = cron.schedule('0 0 1 * *', async () => {
@@ -14,4 +13,4 @@ const job = cron.schedule('0 0 1 * *', async () => {
     }
 });
 
-module.exports = job;
+export default job;

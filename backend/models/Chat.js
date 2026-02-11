@@ -1,7 +1,8 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
-const User = require('./User');
-const Item = require('./Item');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
+import User from './User.js';
+import Item from './Item.js';
+import Request from './Request.js';
 
 // Chat = A chat thread between two users about an item
 const Chat = sequelize.define('Chat', {
@@ -38,4 +39,4 @@ const Chat = sequelize.define('Chat', {
 // Associations
 // Defined in index.js to avoid circular dependencies
 
-module.exports = Chat;
+export default Chat;

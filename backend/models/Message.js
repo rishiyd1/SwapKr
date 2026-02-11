@@ -1,8 +1,7 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
-
-const User = require('./User');
-const Item = require('./Item');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
+import User from './User.js';
+import Item from './Item.js';
 
 // Message = Individual message in a conversation
 const Message = sequelize.define('Message', {
@@ -36,4 +35,4 @@ const Message = sequelize.define('Message', {
 // Associations
 // Defined in index.js to avoid circular dependencies
 
-module.exports = Message;
+export default Message;

@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express';
+import * as requestController from '../controllers/requestController.js';
+import authenticateToken from '../middleware/auth.js';
+
 const router = express.Router();
-const requestController = require('../controllers/requestController');
-const authenticateToken = require('../middleware/auth');
 
 router.get('/', requestController.getRequests);
 router.post('/', authenticateToken, requestController.createRequest);
 
-module.exports = router;
+export default router;

@@ -1,6 +1,6 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
-const User = require('./User');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
+import User from './User.js';
 
 const Item = sequelize.define('Item', {
     id: {
@@ -43,4 +43,4 @@ const Item = sequelize.define('Item', {
 // Associations
 // Defined in index.js to avoid circular dependencies
 
-module.exports = Item;
+export default Item;

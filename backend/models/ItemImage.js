@@ -1,6 +1,5 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
-const Item = require('./Item');
+import { DataTypes } from 'sequelize';
+import sequelize from '../config/database.js';
 
 const ItemImage = sequelize.define('ItemImage', {
     id: {
@@ -21,7 +20,6 @@ const ItemImage = sequelize.define('ItemImage', {
     timestamps: true
 });
 
-// Associations
-// Defined in index.js to avoid circular dependencies
+// Associations are defined in models/index.js to avoid circular dependencies
 
-module.exports = ItemImage;
+export default ItemImage;
