@@ -14,6 +14,7 @@ const Request = sequelize.define('Request', {
     },
     description: {
         type: DataTypes.TEXT,
+        allowNull: false,
     },
     type: {
         type: DataTypes.ENUM('Urgent', 'Normal'),
@@ -25,7 +26,7 @@ const Request = sequelize.define('Request', {
         defaultValue: 0,
     },
     status: {
-        type: DataTypes.ENUM('Open', 'Fulfilled', 'Closed'),
+        type: DataTypes.ENUM('Open', 'Closed'),
         defaultValue: 'Open',
     },
 }, {

@@ -10,15 +10,7 @@ const Message = sequelize.define('Message', {
         autoIncrement: true,
         primaryKey: true,
     },
-    buyerId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    sellerId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    itemId: {
+    chatId: {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
@@ -41,9 +33,6 @@ const Message = sequelize.define('Message', {
 });
 
 // Associations
-Message.belongsTo(User, { foreignKey: 'buyerId', as: 'buyer' });
-Message.belongsTo(User, { foreignKey: 'sellerId', as: 'seller' });
-Message.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
-Message.belongsTo(Item, { foreignKey: 'itemId', as: 'item' });
+// Defined in index.js to avoid circular dependencies
 
 export default Message;

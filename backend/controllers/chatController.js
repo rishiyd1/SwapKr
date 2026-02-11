@@ -12,21 +12,21 @@ export const startConversation = async (req, res) => {
             return res.status(400).json({ message: "Cannot start chat with yourself" });
         }
 
-        // Check if conversation already exists
-        let conversation = await Conversation.findOne({
+        // Check if chat already exists
+        let chat = await Chat.findOne({
             where: { buyerId, sellerId, itemId }
         });
 
-        if (conversation) {
+        if (chat) {
             return res.status(200).json({
-                message: 'Conversation already exists',
-                conversation,
+                message: 'Chat already exists',
+                chat,
                 isNew: false
             });
         }
 
-        // Create new conversation
-        conversation = await Conversation.create({
+        // Create new chat
+        chat = await Chat.create({
             buyerId,
             sellerId,
             itemId,
@@ -34,7 +34,7 @@ export const startConversation = async (req, res) => {
         });
 
         // Fetch with associations
-        const fullConversation = await Conversation.findByPk(conversation.id, {
+        const fullChat = await Chat.findByPk(chat.id, {
             include: [
                 { model: User, as: 'buyer', attributes: ['id', 'name', 'email'] },
                 { model: User, as: 'seller', attributes: ['id', 'name', 'email'] },
@@ -43,13 +43,13 @@ export const startConversation = async (req, res) => {
         });
 
         res.status(201).json({
-            message: 'Conversation started',
-            conversation: fullConversation,
+            message: 'Chat started',
+            chat: fullChat,
             isNew: true
         });
     } catch (error) {
-        console.error('Start Conversation Error:', error);
-        res.status(500).json({ message: 'Error starting conversation', error: error.message });
+        console.error('Start Chat Error:', error);
+        res.status(500).json({ message: 'Error starting chat', error: error.message });
     }
 };
 
@@ -58,7 +58,7 @@ export const getMyConversations = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        const conversations = await Conversation.findAll({
+        const chats = await Chat.findAll({
             where: {
                 [Op.or]: [
                     { buyerId: userId },
@@ -73,30 +73,30 @@ export const getMyConversations = async (req, res) => {
             order: [['lastMessageAt', 'DESC']]
         });
 
-        res.status(200).json(conversations);
+        res.status(200).json(chats);
     } catch (error) {
-        console.error('Get Conversations Error:', error);
-        res.status(500).json({ message: 'Error fetching conversations', error: error.message });
+        console.error('Get Chats Error:', error);
+        res.status(500).json({ message: 'Error fetching chats', error: error.message });
     }
 };
 
 // GET /api/chat/:conversationId/messages - Get messages in a conversation
 export const getMessages = async (req, res) => {
     try {
-        const { conversationId } = req.params;
+        const { chatId } = req.params;
         const userId = req.user.id;
 
-        // Verify user is part of this conversation
-        const conversation = await Conversation.findByPk(conversationId);
-        if (!conversation) {
-            return res.status(404).json({ message: 'Conversation not found' });
+        // Verify user is part of this chat
+        const chat = await Chat.findByPk(chatId);
+        if (!chat) {
+            return res.status(404).json({ message: 'Chat not found' });
         }
-        if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
-            return res.status(403).json({ message: 'Not authorized to view this conversation' });
+        if (chat.buyerId !== userId && chat.sellerId !== userId) {
+            return res.status(403).json({ message: 'Not authorized to view this chat' });
         }
 
         const messages = await Message.findAll({
-            where: { conversationId },
+            where: { chatId },
             include: [
                 { model: User, as: 'sender', attributes: ['id', 'name'] }
             ],
@@ -106,7 +106,7 @@ export const getMessages = async (req, res) => {
         // Mark messages as read
         await Message.update(
             { isRead: true },
-            { where: { conversationId, senderId: { [Op.ne]: userId }, isRead: false } }
+            { where: { chatId, senderId: { [Op.ne]: userId }, isRead: false } }
         );
 
         res.status(200).json(messages);
@@ -119,7 +119,7 @@ export const getMessages = async (req, res) => {
 // POST /api/chat/:conversationId/messages - Send a message
 export const sendMessage = async (req, res) => {
     try {
-        const { conversationId } = req.params;
+        const { chatId } = req.params;
         const { content } = req.body;
         const senderId = req.user.id;
 
@@ -127,28 +127,26 @@ export const sendMessage = async (req, res) => {
             return res.status(400).json({ message: 'Message content is required' });
         }
 
-        // Verify user is part of this conversation
-        const conversation = await Conversation.findByPk(conversationId);
-        if (!conversation) {
-            return res.status(404).json({ message: 'Conversation not found' });
+        // Verify user is part of this chat
+        const chat = await Chat.findByPk(chatId);
+        if (!chat) {
+            return res.status(404).json({ message: 'Chat not found' });
         }
-        if (conversation.buyerId !== senderId && conversation.sellerId !== senderId) {
+        if (chat.buyerId !== senderId && chat.sellerId !== senderId) {
             return res.status(403).json({ message: 'Not authorized to send messages here' });
         }
 
         // Create message
         const message = await Message.create({
-            conversationId,
-            buyerId: conversation.buyerId,
-            sellerId: conversation.sellerId,
-            itemId: conversation.itemId,
+            chatId,
+            itemId: chat.itemId,
             senderId,
             content
         });
 
-        // Update conversation's lastMessageAt
-        conversation.lastMessageAt = new Date();
-        await conversation.save();
+        // Update chat's lastMessageAt
+        chat.lastMessageAt = new Date();
+        await chat.save();
 
         // Fetch with sender info
         const fullMessage = await Message.findByPk(message.id, {
@@ -165,10 +163,10 @@ export const sendMessage = async (req, res) => {
 // GET /api/chat/:conversationId - Get single conversation details
 export const getConversation = async (req, res) => {
     try {
-        const { conversationId } = req.params;
+        const { chatId } = req.params;
         const userId = req.user.id;
 
-        const conversation = await Conversation.findByPk(conversationId, {
+        const chat = await Chat.findByPk(chatId, {
             include: [
                 { model: User, as: 'buyer', attributes: ['id', 'name', 'email', 'hostel'] },
                 { model: User, as: 'seller', attributes: ['id', 'name', 'email', 'hostel'] },
@@ -176,16 +174,16 @@ export const getConversation = async (req, res) => {
             ]
         });
 
-        if (!conversation) {
-            return res.status(404).json({ message: 'Conversation not found' });
+        if (!chat) {
+            return res.status(404).json({ message: 'Chat not found' });
         }
-        if (conversation.buyerId !== userId && conversation.sellerId !== userId) {
+        if (chat.buyerId !== userId && chat.sellerId !== userId) {
             return res.status(403).json({ message: 'Not authorized' });
         }
 
-        res.status(200).json(conversation);
+        res.status(200).json(chat);
     } catch (error) {
-        console.error('Get Conversation Error:', error);
-        res.status(500).json({ message: 'Error fetching conversation', error: error.message });
+        console.error('Get Chat Error:', error);
+        res.status(500).json({ message: 'Error fetching chat', error: error.message });
     }
 };

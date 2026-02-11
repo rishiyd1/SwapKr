@@ -7,12 +7,16 @@ const ItemImage = sequelize.define('ItemImage', {
         autoIncrement: true,
         primaryKey: true,
     },
+    itemId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
     imageUrl: {
         type: DataTypes.STRING,
         allowNull: false,
     },
 }, {
-    tableName: 'item_images',
+    tableName: 'item_images', 
     timestamps: true
 });
 
