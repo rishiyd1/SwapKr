@@ -3,7 +3,7 @@ import User from './User.js';
 import Item from './Item.js';
 import Request from './Request.js';
 import ItemImage from './ItemImage.js';
-import Conversation from './Conversation.js';
+import Chat from './Chat.js';
 import Message from './Message.js';
 
 

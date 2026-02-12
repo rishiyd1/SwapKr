@@ -1,4 +1,4 @@
-import { Conversation, Message, User, Item } from '../models/index.js';
+import { Chat, Message, User, Item } from '../models/index.js';
 import { Op } from 'sequelize';
 
 // POST /api/chat/start - Start a conversation about an item
