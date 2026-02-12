@@ -8,6 +8,20 @@ dotenv.config();
 // Generate 6-digit OTP
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
+// In-memory store for pending (unverified) registrations
+// Users are only saved to DB after OTP verification
+const pendingRegistrations = new Map();
+
+// Auto-cleanup expired pending registrations every 10 minutes
+setInterval(() => {
+    const now = Date.now();
+    for (const [email, data] of pendingRegistrations.entries()) {
+        if (now > new Date(data.otpExpiresAt).getTime()) {
+            pendingRegistrations.delete(email);
+        }
+    }
+}, 10 * 60 * 1000);
+
 // ------------------ REGISTER USER ------------------
 // POST /api/auth/register
 export const registerUser = async (req, res) => {
@@ -38,7 +52,7 @@ export const registerUser = async (req, res) => {
             });
         }
 
-        // Check if user already exists
+        // Check if user already exists in DB (already verified)
         const existingUser = await User.findOne({ where: { email } });
         if (existingUser) {
             return res.status(400).json({
@@ -47,7 +61,7 @@ export const registerUser = async (req, res) => {
             });
         }
 
-        // Check if phone number already exists
+        // Check if phone number already exists in DB
         const existingPhone = await User.findOne({ where: { phoneNumber } });
         if (existingPhone) {
             return res.status(400).json({
@@ -63,8 +77,8 @@ export const registerUser = async (req, res) => {
         const otp = generateOTP();
         const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-        // Create user
-        const user = await User.create({
+        // Store in pending registrations (NOT in DB yet)
+        pendingRegistrations.set(email, {
             name,
             email,
             password: hashedPassword,
@@ -74,17 +88,18 @@ export const registerUser = async (req, res) => {
             hostel,
             otp,
             otpExpiresAt: otpExpiry,
-            isVerified: false,
         });
+
+        console.log(`\n📧 OTP for ${email}: ${otp} (expires in 5 min)\n`);
 
         // Send OTP email
         await transporter.sendMail({
             from: process.env.SMTP_USER,
             to: email,
-            subject: 'Your CampusXchange Verification Code',
+            subject: 'Your SwapKr Verification Code',
             text: `Hello ${name},
 
-Your one-time verification code (OTP) for CampusXchange is:
+Your one-time verification code (OTP) for SwapKr is:
 
 ${otp}
 
@@ -94,13 +109,13 @@ Please do not share this code with anyone.
 If you did not request this code, please ignore this email.
 
 Thank you,
-The CampusXchange Team`,
+The SwapKr Team`,
         });
 
         res.status(201).json({
             success: true,
-            message: 'User registered. OTP sent to your email.',
-            email: user.email
+            message: 'OTP sent to your email. Please verify to complete registration.',
+            email
         });
 
     } catch (error) {
@@ -122,38 +137,57 @@ export const verifyOtp = async (req, res) => {
             });
         }
 
-        const user = await User.findOne({ where: { email } });
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+        // Check in pending registrations first
+        const pendingUser = pendingRegistrations.get(email);
+        if (!pendingUser) {
+            return res.status(404).json({
+                success: false,
+                message: 'No pending registration found. Please register first.'
+            });
         }
 
         // Check if OTP matches
-        if (!user.otp || user.otp.toString().trim() !== otp.toString().trim()) {
+        if (!pendingUser.otp || pendingUser.otp.toString().trim() !== otp.toString().trim()) {
             return res.status(400).json({ success: false, message: 'Invalid OTP' });
         }
 
         // Check if OTP expired
-        if (Date.now() > new Date(user.otpExpiresAt).getTime()) {
-            return res.status(400).json({ success: false, message: 'OTP expired' });
+        if (Date.now() > new Date(pendingUser.otpExpiresAt).getTime()) {
+            pendingRegistrations.delete(email);
+            return res.status(400).json({
+                success: false,
+                message: 'OTP expired. Please register again.'
+            });
         }
 
-        // Clear OTP and mark as verified
-        user.otp = null;
-        user.otpExpiresAt = null;
-        user.isVerified = true;
-        await user.save();
+        // OTP is valid — NOW create the user in the database
+        const user = await User.create({
+            name: pendingUser.name,
+            email: pendingUser.email,
+            password: pendingUser.password,
+            phoneNumber: pendingUser.phoneNumber,
+            department: pendingUser.department,
+            year: pendingUser.year,
+            hostel: pendingUser.hostel,
+            isVerified: true,
+            tokens: 2,
+
+        });
+
+        // Remove from pending registrations
+        pendingRegistrations.delete(email);
 
         // Generate JWT token
-        const token = jwt.sign(
-            { id: user.id, email: user.email },
-            process.env.JWT_SECRET || 'secret_key_change_me',
-            { expiresIn: '7d' }
-        );
+        // const token = jwt.sign(
+        //     { id: user.id, email: user.email },
+        //     process.env.JWT_SECRET || 'secret_key_change_me',
+        //     { expiresIn: '7d' }
+        // );
 
         res.json({
             success: true,
-            message: 'Email verified successfully!',
-            token,
+            message: 'Email verified & account created successfully!',
+
             user: {
                 id: user.id,
                 name: user.name,
@@ -248,29 +282,28 @@ export const resendOtp = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Email is required' });
         }
 
-        const user = await User.findOne({ where: { email } });
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        if (user.isVerified) {
-            return res.status(400).json({ success: false, message: 'User already verified' });
+        // Check pending registrations (unverified users are only in memory)
+        const pendingUser = pendingRegistrations.get(email);
+        if (!pendingUser) {
+            return res.status(404).json({
+                success: false,
+                message: 'No pending registration found. Please register first.'
+            });
         }
 
         // Generate new OTP
         const otp = generateOTP();
         const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
 
-        user.otp = otp;
-        user.otpExpiresAt = otpExpiry;
-        await user.save();
+        pendingUser.otp = otp;
+        pendingUser.otpExpiresAt = otpExpiry;
 
         // Send OTP email
         await transporter.sendMail({
             from: process.env.SMTP_USER,
             to: email,
             subject: 'Your CampusXchange Verification Code (Resent)',
-            text: `Hello ${user.name},
+            text: `Hello ${pendingUser.name},
 
 Your one-time verification code (OTP) for CampusXchange is:
 
@@ -442,6 +475,64 @@ export const updateProfile = async (req, res) => {
 
     } catch (error) {
         console.error('Update Profile Error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// ------------------ USE TOKEN (Urgent Request) ------------------
+// POST /api/auth/use-token (protected route)
+export const useToken = async (req, res) => {
+    try {
+        const user = await User.findByPk(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (user.tokens <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No tokens remaining. Tokens reset on the 1st of every month.',
+                tokens: user.tokens
+            });
+        }
+
+        // Deduct 1 token
+        user.tokens -= 1;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Token used successfully for urgent request.',
+            tokensRemaining: user.tokens
+        });
+
+    } catch (error) {
+        console.error('Use Token Error:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
+
+// ------------------ GET TOKEN BALANCE ------------------
+// GET /api/auth/tokens (protected route)
+export const getTokenBalance = async (req, res) => {
+    try {
+        const user = await User.findByPk(req.user.id, {
+            attributes: ['id', 'name', 'tokens']
+        });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            tokens: user.tokens,
+            message: `You have ${user.tokens} token(s) remaining. Tokens reset on the 1st of every month.`
+        });
+
+    } catch (error) {
+        console.error('Get Token Balance Error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };

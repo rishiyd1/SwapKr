@@ -142,3 +142,4 @@ dist
 .svelte-kit
 
 .env
+database.sqlite
