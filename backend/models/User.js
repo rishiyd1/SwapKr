@@ -42,7 +42,7 @@ const User = sequelize.define('User', {
     },
     tokens: {
         type: DataTypes.INTEGER,
-        defaultValue: 50,
+        defaultValue: 2,
         allowNull: false,
     },
     // OTP fields for email verification

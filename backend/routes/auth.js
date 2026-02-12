@@ -26,4 +26,8 @@ router.post('/reset-password', authController.resetPassword);
 router.get('/profile', authenticateToken, authController.getProfile);
 router.put('/profile', authenticateToken, authController.updateProfile);
 
+// Token Management
+router.post('/use-token', authenticateToken, authController.useToken);
+router.get('/tokens', authenticateToken, authController.getTokenBalance);
+
 export default router;

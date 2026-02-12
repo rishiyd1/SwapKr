@@ -10,7 +10,7 @@ export const createRequest = async (req, res) => {
 
         let tokenCost = 0;
         if (type === 'Urgent') {
-            tokenCost = 25;
+            tokenCost = 1;
         }
 
         const user = await User.findByPk(requesterId);

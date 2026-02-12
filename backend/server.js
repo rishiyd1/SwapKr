@@ -48,8 +48,7 @@ const startServer = async () => {
     }
 };
 
-if (require.main === module) {
-    startServer();
-}
+startServer();
+
 
 export default app;
