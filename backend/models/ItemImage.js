@@ -1,25 +1,19 @@
-import { DataTypes } from 'sequelize';
-import sequelize from '../config/database.js';
+import pool from "../config/database.js";
 
-const ItemImage = sequelize.define('ItemImage', {
-    id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-    },
-    itemId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
-    imageUrl: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-}, {
-    tableName: 'item_images', 
-    timestamps: true
-});
+const ItemImage = {
+  async create({ itemId, imageUrl }) {
+    const result = await pool.query(
+      `INSERT INTO item_images ("itemId", "imageUrl", "createdAt", "updatedAt")
+             VALUES ($1, $2, NOW(), NOW())
+             RETURNING *`,
+      [itemId, imageUrl],
+    );
+    return result.rows[0];
+  },
 
-// Associations are defined in models/index.js to avoid circular dependencies
+  async destroyByItemId(itemId) {
+    await pool.query('DELETE FROM item_images WHERE "itemId" = $1', [itemId]);
+  },
+};
 
 export default ItemImage;

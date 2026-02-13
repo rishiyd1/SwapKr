@@ -1,12 +1,13 @@
-import { Sequelize } from 'sequelize';
-import dotenv from 'dotenv';
+import pg from "pg";
+import dotenv from "dotenv";
 dotenv.config();
 
-// SQLite Configuration
-const sequelize = new Sequelize({
-    dialect: 'sqlite',
-    storage: './database.sqlite', // File location
-    logging: false
+const pool = new pg.Pool({
+  user: process.env.DB_USER || "postgres",
+  password: process.env.DB_PASS || "password",
+  host: process.env.DB_HOST || "localhost",
+  port: parseInt(process.env.DB_PORT) || 5432,
+  database: process.env.DB_NAME || "swapkr",
 });
 
-export default sequelize;
+export default pool;
