@@ -12,7 +12,7 @@ import authRoutes from './routes/auth.js';
 import itemRoutes from './routes/items.js';
 import requestRoutes from './routes/requests.js';
 import chatRoutes from './routes/chats.js';
-import './jobs/tokenReset.js'; // Initialize cron job
+import './jobs/tokenReset.js';
 import { initSocket } from "./socket/socket.js";
 
 const server = http.createServer(app);
@@ -55,7 +55,6 @@ const startServer = async () => {
 };
 
 startServer();
-
 
 export default app;
 
