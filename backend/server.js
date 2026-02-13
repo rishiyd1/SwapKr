@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { sequelize } from './models/index.js';
-
+import http from 'http';
 dotenv.config();
 
 const app = express();
@@ -13,6 +13,12 @@ import itemRoutes from './routes/items.js';
 import requestRoutes from './routes/requests.js';
 import chatRoutes from './routes/chats.js';
 import './jobs/tokenReset.js'; // Initialize cron job
+import { initSocket } from "./socket/socket.js";
+
+const server = http.createServer(app);
+const io = initSocket(server);
+
+app.set("io", io);
 
 // Middleware
 app.use(cors());
@@ -40,7 +46,7 @@ const startServer = async () => {
         await sequelize.sync({ alter: true });
         console.log('Database tables synced.');
 
-        app.listen(PORT, () => {
+        server.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);
         });
     } catch (error) {
