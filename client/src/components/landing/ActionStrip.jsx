@@ -1,5 +1,3 @@
-import { motion } from "framer-motion";
-
 const words = ["sell", "exchange", "request", "buy", "bid", "rent", "trade", "borrow", "give away"];
 const repeated = [...words, ...words, ...words, ...words];
 
@@ -22,7 +20,7 @@ const ActionStrip = () => (
       className="absolute top-0 left-0 right-0 h-px"
       style={{
         background:
-          "linear-gradient(90deg, transparent 0%, hsl(42 100% 62% / 0.3) 30%, hsl(165 70% 45% / 0.3) 70%, transparent 100%)",
+          "linear-gradient(90deg, transparent 0%, hsl(42 100% 62% / 0.4) 50%, transparent 100%)",
       }}
     />
 
@@ -31,7 +29,7 @@ const ActionStrip = () => (
       className="absolute bottom-0 left-0 right-0 h-px"
       style={{
         background:
-          "linear-gradient(90deg, transparent 0%, hsl(165 70% 45% / 0.3) 30%, hsl(42 100% 62% / 0.3) 70%, transparent 100%)",
+          "linear-gradient(90deg, transparent 0%, hsl(42 100% 62% / 0.4) 50%, transparent 100%)",
       }}
     />
 
@@ -48,10 +46,7 @@ const ActionStrip = () => (
         <span key={i} className="font-display text-2xl sm:text-3xl font-semibold text-muted-foreground/40 glow-text select-none">
           {word}
           <span className="mx-4 text-primary/30">•</span>
-        </span>
-      ))}
+        </span>))}
     </div>
-  </section>
-);
-
+  </section>);
 export default ActionStrip;

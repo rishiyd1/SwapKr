@@ -8,7 +8,6 @@ import BuyerScene from "@/components/landing/BuyerScene";
 import ActionStrip from "@/components/landing/ActionStrip";
 import ListingsShowcase from "@/components/landing/ListingsShowcase";
 import FoundersSection from "@/components/landing/FoundersSection";
-import FeedbackSection from "@/components/landing/FeedbackSection";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
 import LoginModal from "@/components/landing/LoginModal";
@@ -21,13 +20,24 @@ const Index = () => {
       <ExclusivityBar />
       <Navbar onLogin={() => setLoginOpen(true)} logoActivated={logoActivated} />
       <HeroSection onStart={() => setLoginOpen(true)} onLogoActivate={setLogoActivated} />
-      <SellerScene />
-      <ListingScene />
-      <BuyerScene />
+      <div className="relative overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-[0.06] pointer-events-none"
+          style={{
+            backgroundImage: `
+              linear-gradient(hsl(var(--accent)) 1px, transparent 1px),
+              linear-gradient(90deg, hsl(var(--accent)) 1px, transparent 1px)
+            `,
+            backgroundSize: "50px 50px",
+          }}
+        />
+        <SellerScene />
+        <ListingScene />
+        <BuyerScene />
+      </div>
       <ActionStrip />
       <ListingsShowcase />
       <FoundersSection />
-      <FeedbackSection />
       <FinalCTA onStart={() => setLoginOpen(true)} />
       <Footer />
       <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
