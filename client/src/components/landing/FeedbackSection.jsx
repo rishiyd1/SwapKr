@@ -39,6 +39,8 @@ const FeedbackSection = () => {
           </Button>
         </div>
       </div>
-    </section>);
+
+    </section>
+  );
 };
 export default FeedbackSection;

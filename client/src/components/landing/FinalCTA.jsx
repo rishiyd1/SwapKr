@@ -22,6 +22,16 @@ const FinalCTA = ({ onStart }) => {
           </Button>
         </div>
       </motion.div>
-    </section>);
+
+      {/* Bottom accent line */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 0%, hsl(42 100% 62% / 0.4) 50%, transparent 100%)",
+        }}
+      />
+    </section>
+  );
 };
 export default FinalCTA;

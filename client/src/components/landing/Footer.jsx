@@ -1,6 +1,36 @@
 import SwapkrLogo from "./SwapkrLogo";
-const Footer = () => (<footer className="border-t border-border py-12 px-6">
-    <div className="max-w-7xl mx-auto">
+
+const Footer = () => (
+  <footer className="border-t border-border py-12 px-6 relative overflow-hidden bg-background">
+    {/* Subtle dot pattern */}
+    <div className="absolute inset-0 opacity-[0.03]">
+      <svg width="100%" height="100%">
+        <defs>
+          <pattern
+            id="footerDots"
+            x="0"
+            y="0"
+            width="30"
+            height="30"
+            patternUnits="userSpaceOnUse"
+          >
+            <circle cx="15" cy="15" r="0.8" fill="hsl(42 100% 62%)" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#footerDots)" />
+      </svg>
+    </div>
+
+    {/* Top border glow */}
+    <div
+      className="absolute top-0 left-0 right-0 h-px"
+      style={{
+        background:
+          "linear-gradient(90deg, transparent 0%, hsl(42 100% 62% / 0.4) 50%, transparent 100%)",
+      }}
+    />
+
+    <div className="max-w-7xl mx-auto relative z-10">
       <div className="flex flex-col md:flex-row justify-between gap-10">
         <div>
           <SwapkrLogo />

@@ -23,32 +23,108 @@ const ListingsShowcase = () => {
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {listings.map((item, i) => (<motion.div key={item.name} className="bg-card border border-border rounded-xl p-5 hover:border-primary/30 transition-colors group cursor-pointer" initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.4, delay: i * 0.08 }}>
-              <div className="w-full h-32 bg-secondary rounded-lg flex items-center justify-center text-5xl mb-4 group-hover:scale-105 transition-transform">
+          {listings.map((item, i) => (
+            <motion.div
+              key={item.name}
+              className="p-5 rounded-xl relative overflow-hidden group cursor-pointer"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.4, delay: i * 0.08 }}
+              style={{
+                backgroundColor: "hsl(var(--card))",
+                border: "2px solid hsl(var(--accent))",
+                boxShadow: "0 0 25px hsl(165 70% 45% / 0.1)",
+              }}
+              whileHover={{
+                boxShadow: "0 0 40px hsl(165 70% 45% / 0.2)",
+              }}
+            >
+              {/* Animated corner accents */}
+              {[0, 1, 2, 3].map((ci) => (
+                <motion.div
+                  key={ci}
+                  className="absolute w-3 h-3 border-2 border-primary"
+                  style={{
+                    top: ci < 2 ? -1 : undefined,
+                    bottom: ci >= 2 ? -1 : undefined,
+                    left: ci % 2 === 0 ? -1 : undefined,
+                    right: ci % 2 !== 0 ? -1 : undefined,
+                  }}
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    delay: ci * 0.5,
+                  }}
+                />
+              ))}
+
+              {/* Image area */}
+              <div className="w-full h-32 rounded-lg flex items-center justify-center text-4xl mb-4 bg-background">
                 {item.emoji}
               </div>
-              <div className="flex items-start justify-between">
+
+              {/* Details */}
+              <div className="space-y-3">
                 <div>
-                  <h3 className="font-display font-semibold text-foreground">{item.name}</h3>
-                  <span className="text-xs text-muted-foreground mt-1 inline-block px-2 py-0.5 rounded-full bg-secondary">
-                    {item.condition}
-                  </span>
+                  <div className="text-xs mb-1 text-primary font-mono">
+                    ITEM_NAME
+                  </div>
+                  <div className="text-base text-foreground font-display font-semibold">
+                    {item.name}
+                  </div>
                 </div>
-                <span className="font-display text-lg font-bold text-primary">{item.price}</span>
-              </div>
-              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3"/>
-                  {item.hostel}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3"/>
-                  {item.time}
-                </span>
+
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <div className="text-xs mb-1 text-accent font-mono">
+                      CONDITION
+                    </div>
+                    <div className="text-xs px-2 py-1 rounded inline-block border border-accent/50 bg-accent/10 text-accent">
+                      {item.condition}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs mb-1 text-primary font-mono">
+                      PRICE
+                    </div>
+                    <div className="text-lg text-primary font-display font-bold">
+                      {item.price}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/50">
+                  <span className="flex items-center gap-1 font-mono">
+                    <MapPin className="w-3 h-3" />
+                    {item.hostel}
+                  </span>
+                  <span className="flex items-center gap-1 font-mono">
+                    <Clock className="w-3 h-3" />
+                    {item.time}
+                  </span>
+                  <motion.span
+                    className="text-accent font-mono flex items-center gap-1"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    ● LIVE
+                  </motion.span>
+                </div>
               </div>
             </motion.div>))}
         </div>
       </div>
-    </section>);
+
+      {/* Bottom accent line */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 0%, hsl(42 100% 62% / 0.4) 50%, transparent 100%)",
+        }}
+      />
+    </section>
+  );
 };
 export default ListingsShowcase;
