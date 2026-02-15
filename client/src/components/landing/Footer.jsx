@@ -1,29 +1,69 @@
+import { motion } from "framer-motion";
 import SwapkrLogo from "./SwapkrLogo";
-const Footer = () => (<footer className="border-t border-border py-12 px-6">
-    <div className="max-w-7xl mx-auto">
+
+const Footer = () => (
+  <footer className="border-t border-border py-12 px-6 relative overflow-hidden bg-background">
+    {/* Subtle dot pattern */}
+    <div className="absolute inset-0 opacity-[0.03]">
+      <svg width="100%" height="100%">
+        <defs>
+          <pattern
+            id="footerDots"
+            x="0"
+            y="0"
+            width="30"
+            height="30"
+            patternUnits="userSpaceOnUse"
+          >
+            <circle cx="15" cy="15" r="0.8" fill="hsl(42 100% 62%)" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#footerDots)" />
+      </svg>
+    </div>
+
+    {/* Top border glow */}
+    <div
+      className="absolute top-0 left-0 right-0 h-px"
+      style={{
+        background:
+          "linear-gradient(90deg, transparent 0%, hsl(42 100% 62% / 0.3) 30%, hsl(165 70% 45% / 0.3) 70%, transparent 100%)",
+      }}
+    />
+
+    <div className="max-w-7xl mx-auto relative z-10">
       <div className="flex flex-col md:flex-row justify-between gap-10">
         <div>
           <SwapkrLogo />
           <p className="text-sm text-muted-foreground mt-3 max-w-xs">
             the campus marketplace that actually makes sense
           </p>
+          {/* Terminal-style status */}
+          <div className="mt-4 font-mono text-xs text-primary/50 flex items-center gap-2">
+            <motion.span
+              className="w-1.5 h-1.5 rounded-full bg-accent"
+              animate={{ opacity: [0.3, 1, 0.3] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+            <span>system: OPERATIONAL</span>
+          </div>
         </div>
 
         <div className="flex gap-16 text-sm">
           <div>
             <h4 className="font-display font-semibold text-foreground mb-3">Quick Links</h4>
             <ul className="space-y-2 text-muted-foreground">
-              <li className="hover:text-foreground transition-colors cursor-pointer">Browse</li>
-              <li className="hover:text-foreground transition-colors cursor-pointer">Sell</li>
-              <li className="hover:text-foreground transition-colors cursor-pointer">How it works</li>
+              <li className="hover:text-primary transition-colors cursor-pointer">Browse</li>
+              <li className="hover:text-primary transition-colors cursor-pointer">Sell</li>
+              <li className="hover:text-primary transition-colors cursor-pointer">How it works</li>
             </ul>
           </div>
           <div>
             <h4 className="font-display font-semibold text-foreground mb-3">Legal</h4>
             <ul className="space-y-2 text-muted-foreground">
-              <li className="hover:text-foreground transition-colors cursor-pointer">Privacy</li>
-              <li className="hover:text-foreground transition-colors cursor-pointer">Terms</li>
-              <li className="hover:text-foreground transition-colors cursor-pointer">Contact</li>
+              <li className="hover:text-primary transition-colors cursor-pointer">Privacy</li>
+              <li className="hover:text-primary transition-colors cursor-pointer">Terms</li>
+              <li className="hover:text-primary transition-colors cursor-pointer">Contact</li>
             </ul>
           </div>
         </div>
@@ -31,9 +71,11 @@ const Footer = () => (<footer className="border-t border-border py-12 px-6">
 
       <div className="mt-12 pt-6 border-t border-border/50 text-center">
         <p className="text-xs text-muted-foreground">
-          made for nitj students ❤️
+          made for nitj students <span className="text-primary">❤️</span>
         </p>
       </div>
     </div>
-  </footer>);
+  </footer>
+);
+
 export default Footer;

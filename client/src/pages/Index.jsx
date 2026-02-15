@@ -15,11 +15,12 @@ import LoginModal from "@/components/landing/LoginModal";
 
 const Index = () => {
   const [loginOpen, setLoginOpen] = useState(false);
+  const [logoActivated, setLogoActivated] = useState(false);
   return (
     <div className="min-h-screen bg-background text-foreground">
       <ExclusivityBar />
-      <Navbar onLogin={() => setLoginOpen(true)} />
-      <HeroSection onStart={() => setLoginOpen(true)} />
+      <Navbar onLogin={() => setLoginOpen(true)} logoActivated={logoActivated} />
+      <HeroSection onStart={() => setLoginOpen(true)} onLogoActivate={setLogoActivated} />
       <SellerScene />
       <ListingScene />
       <BuyerScene />
