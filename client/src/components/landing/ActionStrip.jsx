@@ -2,18 +2,8 @@ const words = ["sell", "exchange", "request", "buy", "bid", "rent", "trade", "bo
 const repeated = [...words, ...words, ...words, ...words];
 
 const ActionStrip = () => (
-  <section className="py-10 overflow-hidden relative bg-background">
-    {/* Grid background */}
-    <div
-      className="absolute inset-0 opacity-[0.04]"
-      style={{
-        backgroundImage: `
-          linear-gradient(hsl(42 100% 62%) 1px, transparent 1px),
-          linear-gradient(90deg, hsl(42 100% 62%) 1px, transparent 1px)
-        `,
-        backgroundSize: "80px 80px",
-      }}
-    />
+  <section className="py-10 overflow-hidden relative border-y border-white/5 bg-black">
+
 
     {/* Top glow line */}
     <div
@@ -43,7 +33,7 @@ const ActionStrip = () => (
 
     <div className="marquee flex gap-8 whitespace-nowrap w-max relative z-10">
       {repeated.map((word, i) => (
-        <span key={i} className="font-display text-2xl sm:text-3xl font-semibold text-muted-foreground/40 glow-text select-none">
+        <span key={i} className="font-display text-2xl sm:text-3xl font-semibold text-primary/80 glow-text select-none">
           {word}
           <span className="mx-4 text-primary/30">•</span>
         </span>))}
