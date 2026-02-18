@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
 import { onlineUsers } from "../utils/socketStore.js";
-import { Chat, Message, User } from "../models/index.js";
+import { Chat, Message } from "../models/index.js";
 
 export const initSocket = (server) => {
   const io = new Server(server, {
@@ -38,7 +38,7 @@ export const initSocket = (server) => {
     socket.on("send_message", async ({ chatId, senderId, content }) => {
       try {
         // Verify the chat exists and the sender is part of it
-        const chat = await Chat.findByPk(chatId);
+        const chat = await Chat.findById(chatId);
         if (!chat) {
           socket.emit("error_message", { message: "Chat not found" });
           return;
@@ -58,13 +58,10 @@ export const initSocket = (server) => {
         });
 
         // Update chat's lastMessageAt
-        chat.lastMessageAt = new Date();
-        await chat.save();
+        await Chat.update(chatId, { lastMessageAt: new Date() });
 
         // Fetch message with sender info
-        const fullMessage = await Message.findByPk(message.id, {
-          include: [{ model: User, as: "sender", attributes: ["id", "name"] }],
-        });
+        const fullMessage = await Message.findByIdWithSender(message.id);
 
         // Emit to the chat room
         const room = `chat_${chatId}`;
