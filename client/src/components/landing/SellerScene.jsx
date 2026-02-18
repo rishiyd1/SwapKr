@@ -9,6 +9,7 @@ const SellerScene = () => {
 
   return (
     <section
+      id="how-it-works"
       ref={ref}
       className="min-h-[80vh] flex items-center justify-center relative overflow-hidden"
     >
