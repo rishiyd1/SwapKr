@@ -152,7 +152,7 @@ const FoundersSection = () => {
   }, []);
 
   return (
-    <section className="py-24 px-6 relative overflow-hidden bg-background" ref={ref}>
+    <section id="about" className="py-24 px-6 relative overflow-hidden bg-background" ref={ref}>
       {/* Circuit-node pattern */}
       <div className="absolute inset-0 opacity-[0.12]">
         <svg width="100%" height="100%">
