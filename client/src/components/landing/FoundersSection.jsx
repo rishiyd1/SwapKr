@@ -4,11 +4,95 @@ import { Github, Linkedin, Twitter, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const founders = [
-    { name: "Arjun", role: "the builder", avatar: "🧑‍💻", color: "bg-primary/20" },
-    { name: "Priya", role: "the designer", avatar: "🎨", color: "bg-accent/20" },
-    { name: "Rahul", role: "the hustler", avatar: "🚀", color: "bg-primary/20" },
-    { name: "Sneha", role: "the thinker", avatar: "🧠", color: "bg-accent/20" },
+    { name: "Arjun", role: "the builder", message: "shipping code 24/7", avatar: "🧑‍💻", color: "bg-primary/20" },
+    { name: "Priya", role: "the designer", message: "pixels perfectly aligned", avatar: "🎨", color: "bg-accent/20" },
+    { name: "Rahul", role: "the hustler", message: "onboarding users daily", avatar: "🚀", color: "bg-primary/20" },
+    { name: "Sneha", role: "the thinker", message: "optimizing every bit", avatar: "🧠", color: "bg-accent/20" },
 ];
+
+const FounderCard = ({ founder, index, isHovered, isOtherHovered, onHover, onLeave }) => {
+  const [displayText, setDisplayText] = useState(founder.role);
+  
+  useEffect(() => {
+    let timeout;
+    if (isHovered) {
+      let i = 0;
+      setDisplayText(""); // Clear text to start typing
+      const type = () => {
+        if (i < founder.message.length) {
+          setDisplayText(founder.message.substring(0, i + 1));
+          i++;
+          timeout = setTimeout(type, 50); // Typing speed
+        }
+      };
+      timeout = setTimeout(type, 100); // Small delay before typing starts
+    } else {
+      setDisplayText(founder.role); // Reset immediately on leave
+    }
+    return () => clearTimeout(timeout);
+  }, [isHovered, founder.message, founder.role]);
+
+  return (
+    <motion.div
+        className="bg-card border border-border rounded-xl p-6 text-center hover:border-primary/30 transition-colors relative overflow-hidden group flex flex-col items-center justify-center cursor-pointer"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        animate={{
+          scale: isHovered ? 1.05 : isOtherHovered ? 0.95 : 1,
+          filter: isOtherHovered ? "blur(2px)" : "blur(0px)",
+          zIndex: isHovered ? 10 : 1,
+        }}
+        transition={{ duration: 0.3 }}
+        onMouseEnter={onHover}
+        onMouseLeave={onLeave} // Ensure leave is handled here too for redundant safety
+        style={{
+          boxShadow: "0 0 15px hsl(42 100% 62% / 0.03)",
+        }}
+        whileHover={{
+          boxShadow: index % 2 === 0
+            ? "0 0 25px hsl(42 100% 62% / 0.15)"
+            : "0 0 25px hsl(165 70% 45% / 0.15)",
+        }}
+      >
+        {/* Corner bracket accents */}
+        <div className="absolute top-1 left-1 w-3 h-3 border-t border-l border-primary/20 rounded-tl-sm" />
+        <div className="absolute top-1 right-1 w-3 h-3 border-t border-r border-primary/20 rounded-tr-sm" />
+        <div className="absolute bottom-1 left-1 w-3 h-3 border-b border-l border-accent/20 rounded-bl-sm" />
+        <div className="absolute bottom-1 right-1 w-3 h-3 border-b border-r border-accent/20 rounded-br-sm" />
+
+        {/* Holographic sweep */}
+        <motion.div
+          className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{
+            background: "linear-gradient(45deg, transparent 30%, hsl(42 100% 62% / 0.04) 50%, transparent 70%)",
+          }}
+        />
+
+        <div className={`w-16 h-16 rounded-full ${founder.color} flex items-center justify-center text-3xl mx-auto mb-3 relative`}>
+          {founder.avatar}
+          {/* Subtle pulse ring */}
+          <motion.div
+            className={`absolute inset-0 rounded-full border ${index % 2 === 0 ? 'border-primary/20' : 'border-accent/20'}`}
+            animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0, 0.5] }}
+            transition={{ duration: 3, repeat: Infinity, delay: index * 0.5 }}
+          />
+        </div>
+        <h3 className="font-display font-semibold text-foreground">{founder.name}</h3>
+        <p className="text-sm text-muted-foreground mt-1 font-mono h-5 flex items-center justify-center">
+             {/* h-5 to prevent layout shift */}
+             {displayText}
+             {isHovered && <span className="animate-pulse">_</span>}
+        </p>
+        <div className="flex justify-center gap-3 mt-4">
+          <Github className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
+          <Linkedin className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
+          <Twitter className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
+        </div>
+      </motion.div>
+  );
+};
+
 
 const chatMessages = [
   { from: "student", text: "bro add a bidding feature pls 🙏", time: "2m ago" },
@@ -29,6 +113,7 @@ const placeholders = [
 const FoundersSection = () => {
   const [message, setMessage] = useState("");
   const [placeholder, setPlaceholder] = useState("");
+  const [hoveredIndex, setHoveredIndex] = useState(null);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
 
@@ -69,31 +154,29 @@ const FoundersSection = () => {
   return (
     <section className="py-24 px-6 relative overflow-hidden bg-background" ref={ref}>
       {/* Circuit-node pattern */}
-      <div className="absolute inset-0 opacity-[0.05]">
+      <div className="absolute inset-0 opacity-[0.12]">
         <svg width="100%" height="100%">
           <defs>
             <pattern
-              id="circuitNodes"
+              id="foundersPattern"
               x="0"
               y="0"
-              width="80"
-              height="80"
+              width="60"
+              height="60"
               patternUnits="userSpaceOnUse"
             >
-              <circle cx="40" cy="40" r="2" fill="hsl(165 70% 45%)" />
-              <line x1="40" y1="40" x2="80" y2="40" stroke="hsl(165 70% 45%)" strokeWidth="0.5" />
-              <line x1="40" y1="40" x2="40" y2="80" stroke="hsl(165 70% 45%)" strokeWidth="0.5" />
-              <circle cx="0" cy="0" r="1" fill="hsl(42 100% 62%)" />
-              <line x1="0" y1="0" x2="40" y2="0" stroke="hsl(42 100% 62%)" strokeWidth="0.3" />
+              <g fill="none" stroke="hsl(42 100% 62%)" strokeWidth="0.5" opacity="0.6">
+                <path d="M10 0v20M0 10h20" transform="translate(20, 20)" />
+              </g>
             </pattern>
           </defs>
-          <rect width="100%" height="100%" fill="url(#circuitNodes)" />
+          <rect width="100%" height="100%" fill="url(#foundersPattern)" />
         </svg>
       </div>
 
       {/* Radial glow */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.05]"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.15]"
         style={{
           background: "radial-gradient(circle, hsl(42 100% 62%) 0%, transparent 70%)",
         }}
@@ -123,54 +206,17 @@ const FoundersSection = () => {
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-2 gap-5" onMouseLeave={() => setHoveredIndex(null)}>
               {founders.map((f, i) => (
-                <motion.div
+                <FounderCard
                   key={f.name}
-                  className="bg-card border border-border rounded-xl p-6 text-center hover:border-primary/30 transition-all relative overflow-hidden group flex flex-col items-center justify-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.4, delay: i * 0.1 }}
-                  style={{
-                    boxShadow: "0 0 15px hsl(42 100% 62% / 0.03)",
-                  }}
-                  whileHover={{
-                    boxShadow: i % 2 === 0
-                      ? "0 0 25px hsl(42 100% 62% / 0.15)"
-                      : "0 0 25px hsl(165 70% 45% / 0.15)",
-                  }}
-                >
-                  {/* Corner bracket accents */}
-                  <div className="absolute top-1 left-1 w-3 h-3 border-t border-l border-primary/20 rounded-tl-sm" />
-                  <div className="absolute top-1 right-1 w-3 h-3 border-t border-r border-primary/20 rounded-tr-sm" />
-                  <div className="absolute bottom-1 left-1 w-3 h-3 border-b border-l border-accent/20 rounded-bl-sm" />
-                  <div className="absolute bottom-1 right-1 w-3 h-3 border-b border-r border-accent/20 rounded-br-sm" />
-
-                  {/* Holographic sweep */}
-                  <motion.div
-                    className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
-                    style={{
-                      background: "linear-gradient(45deg, transparent 30%, hsl(42 100% 62% / 0.04) 50%, transparent 70%)",
-                    }}
-                  />
-
-                  <div className={`w-16 h-16 rounded-full ${f.color} flex items-center justify-center text-3xl mx-auto mb-3 relative`}>
-                    {f.avatar}
-                    {/* Subtle pulse ring */}
-                    <motion.div
-                      className={`absolute inset-0 rounded-full border ${i % 2 === 0 ? 'border-primary/20' : 'border-accent/20'}`}
-                      animate={{ scale: [1, 1.15, 1], opacity: [0.5, 0, 0.5] }}
-                      transition={{ duration: 3, repeat: Infinity, delay: i * 0.5 }}
-                    />
-                  </div>
-                  <h3 className="font-display font-semibold text-foreground">{f.name}</h3>
-                  <p className="text-sm text-muted-foreground mt-1 font-mono">{f.role}</p>
-                  <div className="flex justify-center gap-3 mt-4">
-                    <Github className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
-                    <Linkedin className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
-                    <Twitter className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
-                  </div>
-                </motion.div>
+                  founder={f}
+                  index={i}
+                  isHovered={hoveredIndex === i}
+                  isOtherHovered={hoveredIndex !== null && hoveredIndex !== i}
+                  onHover={() => setHoveredIndex(i)}
+                  onLeave={() => setHoveredIndex(null)} // This might get overridden by parent onMouseLeave but good for specific card exit
+                />
               ))}
             </div>
           </div>
@@ -196,7 +242,7 @@ const FoundersSection = () => {
             </motion.div>
 
             <div
-              className="bg-card border border-border rounded-xl p-4 space-y-2 mb-3 relative overflow-hidden max-w-md flex-1 flex flex-col"
+              className="bg-card border border-border rounded-xl p-4 space-y-2 mb-3 relative overflow-hidden w-full max-w-lg flex-1 flex flex-col"
               style={{
                 boxShadow: "0 0 20px hsl(42 100% 62% / 0.05)",
               }}
@@ -243,7 +289,7 @@ const FoundersSection = () => {
               </motion.div>
             </div>
 
-            <div className="flex gap-2 max-w-md">
+            <div className="flex gap-2 w-full max-w-lg">
               <input
                 type="text"
                 placeholder={placeholder}
@@ -264,6 +310,15 @@ const FoundersSection = () => {
           </div>
         </div>
       </div>
+
+      {/* Bottom accent line */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-px"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 0%, hsl(42 100% 62% / 0.4) 50%, transparent 100%)",
+        }}
+      />
 
     </section>
   );

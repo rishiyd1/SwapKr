@@ -12,8 +12,35 @@ const listings = [
 const ListingsShowcase = () => {
     const ref = useRef(null);
     const isInView = useInView(ref, { once: true, margin: "-50px" });
-    return (<section className="py-24 px-6" ref={ref}>
-      <div className="max-w-7xl mx-auto">
+    return (<section className="py-24 px-6 relative overflow-hidden" ref={ref}>
+      {/* Dot matrix background pattern */}
+      <div className="absolute inset-0 opacity-[0.12] pointer-events-none">
+        <svg width="100%" height="100%">
+          <defs>
+            <pattern
+              id="dotMatrixListings"
+              x="0"
+              y="0"
+              width="24"
+              height="24"
+              patternUnits="userSpaceOnUse"
+            >
+              <circle cx="2" cy="2" r="1" fill="hsl(42 100% 62%)" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#dotMatrixListings)" />
+        </svg>
+      </div>
+
+      {/* Radial glow */}
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-[0.15] pointer-events-none"
+        style={{
+          background: "radial-gradient(circle, hsl(42 100% 62%) 0%, transparent 60%)",
+        }}
+      />
+
+      <div className="max-w-7xl mx-auto relative z-10">
         <h2 className="font-display text-3xl sm:text-4xl font-bold text-center mb-3">
           See what's already{" "}
           <span className="text-primary">moving</span> on campus
