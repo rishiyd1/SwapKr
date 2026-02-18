@@ -16,16 +16,16 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import SwapkrLogo from "@/components/landing/SwapkrLogo";
 
 const Login = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialEmail = searchParams.get("email") || "";
   const initialMode = searchParams.get("mode") || "login";
 
   const [mode, setMode] = useState(initialMode); // 'login' | 'signup'
-  const [loginMethod, setLoginMethod] = useState("password"); // 'password' | 'otp'
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -48,7 +48,8 @@ const Login = () => {
   // Logic placeholder
   const handleLogin = (e) => {
     e.preventDefault();
-    console.log("Logging in with", loginMethod, { email, password, otp });
+    console.log("Logging in with password", { email, password });
+    navigate("/home");
   };
 
   const handleSignupEmail = (e) => {
@@ -80,6 +81,7 @@ const Login = () => {
       branch,
       phoneNumber,
     });
+    navigate("/home");
   };
 
   const resetSignup = () => {
@@ -167,22 +169,6 @@ const Login = () => {
                   Enter your details to access your account
                 </p>
 
-                {/* Login Method Tabs */}
-                <div className="flex bg-secondary/50 p-1 rounded-lg mb-6">
-                  <button
-                    onClick={() => setLoginMethod("password")}
-                    className={`flex-1 text-xs py-2 rounded-md transition-all ${loginMethod === "password" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    Password
-                  </button>
-                  <button
-                    onClick={() => setLoginMethod("otp")}
-                    className={`flex-1 text-xs py-2 rounded-md transition-all ${loginMethod === "otp" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    OTP
-                  </button>
-                </div>
-
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
                     <div className="relative">
@@ -197,61 +183,37 @@ const Login = () => {
                     </div>
                   </div>
 
-                  {loginMethod === "password" && (
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Password"
-                          className="pl-10 pr-10 bg-secondary/50 border-white/5 focus:border-primary/50"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                        >
-                          {showPassword ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </button>
-                      </div>
-                      <div className="flex justify-end">
-                        <a
-                          href="#"
-                          className="text-xs text-primary hover:underline"
-                        >
-                          Forgot Password?
-                        </a>
-                      </div>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Password"
+                        className="pl-10 pr-10 bg-secondary/50 border-white/5 focus:border-primary/50"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
-                  )}
-
-                  {loginMethod === "otp" && (
-                    <div className="space-y-2">
-                      {/* Placeholder for Send OTP interaction */}
-                      <div className="relative">
-                        <Smartphone className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          type="text"
-                          placeholder="Enter OTP"
-                          className="pl-10 bg-secondary/50 border-white/5 focus:border-primary/50 tracking-widest"
-                          value={otp}
-                          onChange={(e) => setOtp(e.target.value)}
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-primary/10 hover:bg-primary/20 text-primary text-xs rounded transition-colors"
-                        >
-                          Send
-                        </button>
-                      </div>
+                    <div className="flex justify-end">
+                      <a
+                        href="#"
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Forgot Password?
+                      </a>
                     </div>
-                  )}
+                  </div>
 
                   <Button
                     className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display mt-2"
