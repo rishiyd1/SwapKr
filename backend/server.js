@@ -12,6 +12,7 @@ import authRoutes from "./routes/auth.js";
 import itemRoutes from "./routes/items.js";
 import requestRoutes from "./routes/requests.js";
 import chatRoutes from "./routes/chats.js";
+import feedbackRoutes from "./routes/feedback.js";
 import "./jobs/tokenReset.js";
 import { initSocket } from "./socket/socket.js";
 
@@ -30,6 +31,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/requests", requestRoutes);
 app.use("/api/chats", chatRoutes);
+app.use("/api/feedback", feedbackRoutes);
 
 // Basic Route
 app.get("/", (req, res) => {
