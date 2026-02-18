@@ -144,3 +144,5 @@ dist
 .env
 database.sqlite
 database.sqlite-journal
+dump.rdb
+credentials.json
