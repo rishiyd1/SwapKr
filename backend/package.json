@@ -9,18 +9,21 @@
     "dev": "nodemon server.js",
     "server": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "init-db": "node scripts/initDb.js"
+    "init-db": "node scripts/initDb.js",
+    "worker": "node workers/emailWorker.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "bullmq": "^5.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "express-session": "^1.19.0",
     "googleapis": "^171.4.0",
+    "ioredis": "^5.0.0",
     "jsonwebtoken": "^9.0.3",
     "node-cron": "^4.2.1",
     "nodemailer": "^8.0.1",
