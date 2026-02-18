@@ -1,9 +1,10 @@
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import StudyTableSVG from "./StudyTableSVG";
 
-const HeroSection = ({ onStart, onLogoActivate }) => {
+const HeroSection = ({ onLogoActivate }) => {
   const [scanned, setScanned] = useState(false);
   const sectionRef = useRef(null);
 
@@ -117,13 +118,14 @@ const HeroSection = ({ onStart, onLogoActivate }) => {
             what's lying around your room is useful to someone else
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <Button
-              size="lg"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-display glow-primary px-8"
-              onClick={onStart}
-            >
-              Start swapping
-            </Button>
+            <Link to="/login">
+              <Button
+                size="lg"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-display glow-primary px-8"
+              >
+                Start swapping
+              </Button>
+            </Link>
             <Button
               size="lg"
               variant="outline"
