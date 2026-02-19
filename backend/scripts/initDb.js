@@ -3,15 +3,29 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const dbName = process.env.DB_NAME || "swapkr";
-const config = {
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASS || "password",
-  host: process.env.DB_HOST || "localhost",
-  port: parseInt(process.env.DB_PORT) || 5432,
-  database: "postgres", // Connect to default DB to create new one
+
+const getClientConfig = (initialDb = null) => {
+  if (process.env.DATABASE_URL) {
+    return {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    };
+  }
+  return {
+    user: process.env.DB_USER || "postgres",
+    password: process.env.DB_PASS || "password",
+    host: process.env.DB_HOST || "localhost",
+    port: parseInt(process.env.DB_PORT) || 5432,
+    database: initialDb || "postgres",
+  };
 };
 
 const createDb = async () => {
+  if (process.env.DATABASE_URL) {
+    console.log("Using DATABASE_URL, skipping database creation check.");
+    return;
+  }
+  const config = getClientConfig("postgres");
   const client = new pg.Client(config);
   try {
     await client.connect();
@@ -51,11 +65,11 @@ const createDb = async () => {
 };
 
 const createTables = async () => {
-  const appConfig = { ...config, database: dbName };
-  const client = new pg.Client(appConfig);
+  const config = getClientConfig(dbName);
+  const client = new pg.Client(config);
   try {
     await client.connect();
-    console.log(`Connected to ${dbName}. Creating tables...`);
+    console.log(`Connected to database. Creating tables...`);
 
     // Create ENUM types (safe: IF NOT EXISTS via DO block)
     await client.query(`
