@@ -27,7 +27,7 @@ app.set("io", io);
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:8080", "http://127.0.0.1:8080"],
+    origin: ["http://localhost:8080", "http://127.0.0.1:8080", "https://swapkr.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
   }),
