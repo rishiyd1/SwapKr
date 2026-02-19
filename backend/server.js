@@ -6,7 +6,7 @@ import http from "http";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 import authRoutes from "./routes/auth.js";
 import itemRoutes from "./routes/items.js";
@@ -27,9 +27,7 @@ app.set("io", io);
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:8080", "http://127.0.0.1:8080"],
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    credentials: true,
+    origin: "*",
   }),
 );
 app.use(express.json());
