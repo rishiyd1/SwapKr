@@ -301,7 +301,7 @@ export const resendOtp = async (req, res) => {
     await transporter.sendMail({
       from: process.env.SMTP_USER,
       to: email,
-      subject: "Your CampusXchange Verification Code (Resent)",
+      subject: "Your SwapKr Verification Code (Resent)",
       text: `Hello ${pendingUser.name},
 
 Your one-time verification code (OTP) for CampusXchange is:
@@ -311,7 +311,7 @@ ${otp}
 This code is valid for 5 minutes. Please do not share this code with anyone.
 
 Thank you,
-The CampusXchange Team`,
+The SwapKr Team`,
     });
 
     res.status(200).json({
@@ -352,7 +352,7 @@ export const sendResetOtp = async (req, res) => {
     await transporter.sendMail({
       from: process.env.SMTP_USER,
       to: user.email,
-      subject: "Password Reset OTP - CampusXchange",
+      subject: "Password Reset OTP - SwapKr",
       text: `Hello ${user.name},
 
 Please use the following one-time code (OTP) to reset your password:
@@ -363,7 +363,7 @@ This code is valid for 15 minutes. For security, please do not share this code.
 If you did not request a password reset, you can safely ignore this email.
 
 Thank you,
-Team CampusXchange`,
+Team SwapKr`,
     });
 
     res.json({ success: true, message: "OTP sent successfully" });
