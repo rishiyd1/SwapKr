@@ -6,24 +6,35 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load your service account credentials
-const credentials = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "../credentials.json"), "utf8")
-);
+// Load service account credentials (gracefully handle missing file)
+let sheets = null;
+const credentialsPath = path.join(__dirname, "../credentials.json");
 
-const { client_email, private_key } = credentials;
+if (fs.existsSync(credentialsPath)) {
+  const credentials = JSON.parse(fs.readFileSync(credentialsPath, "utf8"));
+  const { client_email, private_key } = credentials;
 
-// ✅ Create a modern JWT auth client (recommended method)
-const auth = new google.auth.JWT({
-  email: client_email,
-  key: private_key,
-  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-});
+  const auth = new google.auth.JWT({
+    email: client_email,
+    key: private_key,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
 
-const sheets = google.sheets({ version: "v4", auth });
+  sheets = google.sheets({ version: "v4", auth });
+  console.log("✓ Google Sheets credentials loaded");
+} else {
+  console.warn("⚠ credentials.json not found — feedback endpoint disabled");
+}
 
 export const sendFeedback = async (req, res) => {
   try {
+    if (!sheets) {
+      return res.status(503).json({
+        success: false,
+        message: "Feedback service not configured (missing credentials.json)",
+      });
+    }
+
     const { name, email, feedback } = req.body;
 
     if (!name || !feedback) {
