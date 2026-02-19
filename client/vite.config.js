@@ -16,12 +16,12 @@ export default defineConfig(({ mode }) => ({
     },
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:5000",
+        target: process.env.VITE_BACKEND_URL,
         changeOrigin: true,
         secure: false,
       },
       "/socket.io": {
-        target: "http://127.0.0.1:5000",
+        target: process.env.VITE_BACKEND_URL,
         ws: true,
       },
     },
