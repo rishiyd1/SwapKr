@@ -11,8 +11,10 @@ const PORT = process.env.PORT || 5000;
 import authRoutes from "./routes/auth.js";
 import itemRoutes from "./routes/items.js";
 import requestRoutes from "./routes/requests.js";
+import orderRoutes from "./routes/orders.js";
 import chatRoutes from "./routes/chats.js";
 import feedbackRoutes from "./routes/feedback.js";
+import notificationRoutes from "./routes/notifications.js";
 import "./jobs/tokenReset.js";
 import { initSocket } from "./socket/socket.js";
 
@@ -30,8 +32,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/requests", requestRoutes);
+app.use("/api/orders", orderRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/feedback", feedbackRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Basic Route
 app.get("/", (req, res) => {
@@ -56,4 +60,3 @@ const startServer = async () => {
 startServer();
 
 export default app;
-

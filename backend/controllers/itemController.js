@@ -58,6 +58,11 @@ export const getItems = async (req, res) => {
 
     if (category) where.category = category;
 
+    // Logic to exclude own items if logged in
+    if (req.user && req.user.id) {
+      where.excludeSellerId = req.user.id;
+    }
+
     const items = await Item.findAll({ where, search, minPrice, maxPrice });
 
     res.status(200).json(items);

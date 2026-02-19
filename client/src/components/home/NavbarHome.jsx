@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   Bell,
@@ -9,6 +9,8 @@ import {
   LogOut,
   Settings,
   PlusCircle,
+  Trash2,
+  Check,
 } from "lucide-react";
 import CreateItemDialog from "../items/CreateItemDialog";
 import CreateRequestDialog from "../requests/CreateRequestDialog";
@@ -24,34 +26,71 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authService } from "@/services/auth.service";
+import { notificationsService } from "@/services/notifications.service";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 const NavbarHome = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
   }, []);
 
+  const { data } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: notificationsService.getNotifications,
+    refetchInterval: 30000, // Refetch every 30 seconds
+    enabled: !!user,
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: notificationsService.markAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: notificationsService.markAllRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success("All notifications marked as read");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: notificationsService.deleteNotification,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
   const handleLogout = () => {
     authService.logout();
     navigate("/");
   };
 
+  const notifications = data?.notifications || [];
+  const unreadCount = data?.unreadCount || 0;
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center px-4 md:px-6">
-        {/* Logo (Fixed width to prevent search bar jump on hover) */}
+        {/* Logo */}
         <div className="w-32 flex items-center">
           <Link to="/home" className="flex items-center space-x-2">
             <SwapkrLogo className="h-6 w-auto" />
           </Link>
         </div>
 
-        {/* Search Bar (Centered using flex-1 with a slight right offset) */}
+        {/* Search Bar */}
         <div className="hidden md:flex flex-1 justify-center px-4 pl-12 h-full items-center">
           <motion.div
             initial={false}
@@ -74,8 +113,6 @@ const NavbarHome = () => {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2 ml-auto">
-          {/* Mobile Search Trigger could go here */}
-
           <Button
             variant="ghost"
             size="icon"
@@ -83,14 +120,99 @@ const NavbarHome = () => {
           >
             <MessageCircle className="h-5 w-5" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-foreground relative"
-          >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-background" />
-          </Button>
+
+          {/* Notifications Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground relative"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-80 bg-card border-white/10 text-card-foreground p-0 overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-white/10">
+                <DropdownMenuLabel className="p-0 font-semibold">
+                  Notifications
+                </DropdownMenuLabel>
+                {unreadCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs text-accent hover:text-accent/80 p-0"
+                    onClick={() => markAllReadMutation.mutate()}
+                  >
+                    Mark all as read
+                  </Button>
+                )}
+              </div>
+              <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground flex flex-col items-center gap-2">
+                    <Bell className="h-8 w-8 opacity-20" />
+                    <p className="text-sm">No notifications yet</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col">
+                    {notifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        className={`flex gap-3 p-4 border-b border-white/5 transition-colors hover:bg-white/5 relative group ${
+                          !notif.isRead
+                            ? "bg-accent/[0.08] border-l-2 border-l-accent"
+                            : "border-l-2 border-l-transparent"
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={`text-sm leading-tight mb-1 ${!notif.isRead ? "font-semibold pr-6" : ""}`}
+                          >
+                            {notif.content}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {formatDistanceToNow(new Date(notif.createdAt), {
+                              addSuffix: true,
+                            })}
+                          </p>
+                        </div>
+                        {!notif.isRead && (
+                          <button
+                            onClick={() => markReadMutation.mutate(notif.id)}
+                            className="absolute right-4 top-4 h-2 w-2 rounded-full bg-accent"
+                            title="Mark as read"
+                          />
+                        )}
+                        <button
+                          onClick={() => deleteMutation.mutate(notif.id)}
+                          className="opacity-0 group-hover:opacity-100 absolute right-4 bottom-4 text-muted-foreground hover:text-red-500 transition-opacity"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <DropdownMenuSeparator className="bg-white/10 m-0" />
+              <Button
+                variant="ghost"
+                className="w-full h-12 rounded-none text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => navigate("/profile?tab=requests")}
+              >
+                View all activity
+              </Button>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <CreateRequestDialog />
           <CreateItemDialog />

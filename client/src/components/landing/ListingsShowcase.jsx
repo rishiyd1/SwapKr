@@ -5,48 +5,54 @@ import ItemCard from "@/components/home/ItemCard";
 const listings = [
   {
     name: "Casio FX-991EX",
-    price: "₹800",
+    price: "800",
     condition: "Good",
+    category: "Hardware",
     hostel: "Hostel 7",
     time: "2h ago",
     emoji: "🧮",
   },
   {
     name: "Engineering Graphics Kit",
-    price: "₹350",
+    price: "350",
     condition: "Like new",
+    category: "Academics",
     hostel: "Hostel 3",
     time: "5h ago",
     emoji: "📐",
   },
   {
     name: "Room Heater (Bajaj)",
-    price: "₹600",
+    price: "600",
     condition: "Used",
+    category: "Daily Use",
     hostel: "Mega Boys",
     time: "1d ago",
     emoji: "🔥",
   },
   {
     name: "Lab Coat (M)",
-    price: "₹150",
+    price: "150",
     condition: "Good",
+    category: "Daily Use",
     hostel: "Hostel 9",
     time: "3h ago",
     emoji: "🥼",
   },
   {
     name: 'Dell Monitor 22"',
-    price: "₹4,500",
+    price: "4,500",
     condition: "Excellent",
+    category: "Hardware",
     hostel: "Hostel 2",
     time: "6h ago",
     emoji: "🖥️",
   },
   {
     name: "Firefox Cycle",
-    price: "₹2,000",
+    price: "2,000",
     condition: "Fair",
+    category: "Sports",
     hostel: "Mega Girls",
     time: "12h ago",
     emoji: "🚲",
@@ -109,11 +115,10 @@ const ListingsShowcase = () => {
               <ItemCard
                 title={item.name}
                 price={item.price}
+                category={item.category}
                 condition={item.condition}
-                location={item.hostel}
                 time={item.time}
                 image={item.emoji}
-                description="Listed just now"
                 className="h-full bg-card/50 backdrop-blur-sm hover:shadow-[0_0_40px_hsl(165_70%_45%_/_0.15)] hover:border-accent/50 transition-all duration-300"
               />
             </motion.div>

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { itemsService } from "@/services/items.service";
 import Footer from "@/components/landing/Footer";
+import { formatTimeAgo } from "@/lib/utils";
 
 const CATEGORIES = [
   { id: "Equipments", label: "Hardware", icon: "⚙️" },
@@ -117,11 +118,11 @@ const Home = () => {
                       (item) => (
                         <ItemCard
                           key={item.id}
+                          id={item.id}
                           title={item.title}
-                          price={`₹${item.price}`} /* Backend usually sends numbers */
-                          description={item.description}
-                          location={item.location || "Campus"}
-                          time={new Date(item.createdAt).toLocaleDateString()}
+                          price={item.price}
+                          category={item.category}
+                          time={formatTimeAgo(item.createdAt)}
                           image={
                             Array.isArray(item.images)
                               ? item.images.length > 0
@@ -132,6 +133,7 @@ const Home = () => {
                                 : ["📦"]
                           }
                           condition={item.condition}
+                          seller={item.seller}
                         />
                       ),
                     )}

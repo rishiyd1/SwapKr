@@ -29,6 +29,16 @@ const Request = {
     );
     return result.rows;
   },
+
+  async findByRequesterId(requesterId) {
+    const result = await pool.query(
+      `SELECT * FROM requests 
+             WHERE "requesterId" = $1 
+             ORDER BY "createdAt" DESC`,
+      [requesterId],
+    );
+    return result.rows;
+  },
 };
 
 export default Request;

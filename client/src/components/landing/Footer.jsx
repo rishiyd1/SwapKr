@@ -100,8 +100,13 @@ const Footer = () => {
                 <li className="hover:text-foreground transition-colors cursor-pointer">
                   Terms
                 </li>
-                <li className="hover:text-foreground transition-colors cursor-pointer">
-                  Contact
+                <li>
+                  <a
+                    href="/#about"
+                    className="hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    Contact
+                  </a>
                 </li>
               </ul>
             </div>
