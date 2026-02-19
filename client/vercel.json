@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://plusone-slsl2.ondigitalocean.app/api/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }

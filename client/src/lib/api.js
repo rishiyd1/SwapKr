@@ -30,7 +30,19 @@ export const apiRequest = async (
   }
 
   try {
-    const response = await fetch(endpoint, config);
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
+    // Remove trailing slash from backendUrl if present
+    const baseUrl = backendUrl.endsWith("/") ? backendUrl.slice(0, -1) : backendUrl;
+    // Ensure endpoint has leading slash if not present (optional, but good practice)
+    // But usually endpoints passed are like "/api/..."
+
+    // Construct full URL
+    // If endpoint is already absolute, use it as is
+    const url = endpoint.startsWith("http")
+      ? endpoint
+      : `${baseUrl}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+
+    const response = await fetch(url, config);
     const data = await response.json();
 
     if (!response.ok) {
