@@ -51,6 +51,25 @@ const Notification = {
       [id, userId],
     );
   },
+
+  async createBatchForRequest({ type, content, relatedId, excludedUserId }) {
+    await pool.query(
+      `INSERT INTO notifications ("userId", type, content, "relatedId", "isRead", "createdAt", "updatedAt")
+       SELECT id, $1, $2, $3, false, NOW(), NOW()
+       FROM users
+       WHERE id != $4 AND "isVerified" = true`,
+      [type, content, relatedId, excludedUserId],
+    );
+  },
+
+  async deleteOldNotifications() {
+    const result = await pool.query(
+      `DELETE FROM notifications 
+       WHERE "createdAt" < NOW() - INTERVAL '7 days'
+       RETURNING id`,
+    );
+    return result.rowCount;
+  },
 };
 
 export default Notification;

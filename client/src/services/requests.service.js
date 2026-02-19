@@ -14,4 +14,16 @@ export const requestsService = {
   getMyRequests: async () => {
     return await apiRequest(`${REQUESTS_URL}/my-requests`, "GET");
   },
+
+  getRequestById: async (id) => {
+    return await apiRequest(`${REQUESTS_URL}/${id}`, "GET");
+  },
+
+  updateRequest: async (id, requestData) => {
+    return await apiRequest(`${REQUESTS_URL}/${id}`, "PUT", requestData);
+  },
+
+  deleteRequest: async (id) => {
+    return await apiRequest(`${REQUESTS_URL}/${id}`, "DELETE");
+  },
 };

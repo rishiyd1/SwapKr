@@ -61,4 +61,13 @@ export const authService = {
     }
     return data;
   },
+
+  deleteAccount: async (password) => {
+    const response = await apiRequest(`${AUTH_URL}/account`, "DELETE", {
+      password,
+    });
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    return response;
+  },
 };

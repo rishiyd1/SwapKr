@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,29 +9,34 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Loader2, Zap } from "lucide-react";
+import { Loader2, Edit, Zap } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { requestsService } from "@/services/requests.service";
 
-const CreateRequestDialog = ({ trigger }) => {
+const EditRequestDialog = ({ request, trigger, onRequestUpdated }) => {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     budget: "",
-    isUrgent: false,
   });
+
+  useEffect(() => {
+    if (request) {
+      setFormData({
+        title: request.title || "",
+        description: request.description || "",
+        budget: request.budget || "",
+      });
+    }
+  }, [request, open]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleToggleUrgent = (checked) => {
-    setFormData((prev) => ({ ...prev, isUrgent: checked }));
   };
 
   const handleSubmit = async (e) => {
@@ -46,20 +51,14 @@ const CreateRequestDialog = ({ trigger }) => {
       const submitData = {
         title: formData.title,
         description: formData.description,
-        budget: formData.budget,
         budget: formData.budget ? parseFloat(formData.budget) : null,
-        type: formData.isUrgent ? "Urgent" : "Normal",
       };
-      await requestsService.createRequest(submitData);
-      toast.success(
-        formData.isUrgent
-          ? "Urgent request posted!"
-          : "Request created successfully!",
-      );
+      await requestsService.updateRequest(request.id, submitData);
+      toast.success("Request updated successfully!");
       setOpen(false);
-      setFormData({ title: "", description: "", budget: "", isUrgent: false });
+      if (onRequestUpdated) onRequestUpdated();
     } catch (error) {
-      toast.error(error.message || "Failed to create request");
+      toast.error(error.message || "Failed to update request");
     } finally {
       setIsLoading(false);
     }
@@ -69,22 +68,22 @@ const CreateRequestDialog = ({ trigger }) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button
-            size="sm"
-            className="hidden sm:flex bg-secondary/50 hover:bg-secondary border border-dashed border-primary/30 text-primary font-display ml-2 gap-2"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Make a Request
+          <Button variant="outline" size="sm" className="gap-2">
+            <Edit className="h-4 w-4" />
+            Edit Request
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] bg-card border-white/10 text-card-foreground">
         <DialogHeader>
-          <DialogTitle>Make a Request</DialogTitle>
+          <DialogTitle>Edit Request</DialogTitle>
+          <div className="text-sm text-muted-foreground">
+            Update the details of your request.
+          </div>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            <label className="text-sm font-medium leading-none">
               Title <span className="text-red-500">*</span>
             </label>
             <Input
@@ -97,7 +96,7 @@ const CreateRequestDialog = ({ trigger }) => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            <label className="text-sm font-medium leading-none">
               Description
             </label>
             <Textarea
@@ -109,7 +108,7 @@ const CreateRequestDialog = ({ trigger }) => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            <label className="text-sm font-medium leading-none">
               Budget (Optional)
             </label>
             <Input
@@ -122,37 +121,15 @@ const CreateRequestDialog = ({ trigger }) => {
             />
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-lg border border-white/5 bg-secondary/30">
-            <div className="space-y-0.5">
-              <Label
-                htmlFor="urgent-mode"
-                className="text-sm font-semibold flex items-center gap-2"
-              >
-                <Zap
-                  className={`h-4 w-4 ${formData.isUrgent ? "text-primary fill-primary" : "text-muted-foreground"}`}
-                />
-                Mark as Urgent
-              </Label>
-              <p className="text-[10px] text-muted-foreground">
-                Costs 1 Token. Notifies the entire campus via email.
-              </p>
-            </div>
-            <Switch
-              id="urgent-mode"
-              checked={formData.isUrgent}
-              onCheckedChange={handleToggleUrgent}
-            />
-          </div>
-
           <div className="flex justify-end pt-4">
             <Button type="submit" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  Updating...
                 </>
               ) : (
-                "Create Request"
+                "Update Request"
               )}
             </Button>
           </div>
@@ -162,4 +139,4 @@ const CreateRequestDialog = ({ trigger }) => {
   );
 };
 
-export default CreateRequestDialog;
+export default EditRequestDialog;

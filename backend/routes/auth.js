@@ -1,6 +1,6 @@
-import express from 'express';
-import * as authController from '../controllers/authController.js';
-import authenticateToken from '../middleware/auth.js';
+import express from "express";
+import * as authController from "../controllers/authController.js";
+import authenticateToken from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -9,25 +9,26 @@ const router = express.Router();
 // ==========================================
 
 // Registration & Verification
-router.post('/register', authController.registerUser);
-router.post('/verify-otp', authController.verifyOtp);
-router.post('/resend-otp', authController.resendOtp);
+router.post("/register", authController.registerUser);
+router.post("/verify-otp", authController.verifyOtp);
+router.post("/resend-otp", authController.resendOtp);
 
 // Login
-router.post('/login', authController.loginUser);
+router.post("/login", authController.loginUser);
 
 // Password Reset
-router.post('/send-reset-otp', authController.sendResetOtp);
-router.post('/reset-password', authController.resetPassword);
+router.post("/send-reset-otp", authController.sendResetOtp);
+router.post("/reset-password", authController.resetPassword);
 
 // ==========================================
 // Protected Routes (require authentication)
 // ==========================================
-router.get('/profile', authenticateToken, authController.getProfile);
-router.put('/profile', authenticateToken, authController.updateProfile);
+router.get("/profile", authenticateToken, authController.getProfile);
+router.put("/profile", authenticateToken, authController.updateProfile);
 
 // Token Management
-router.post('/use-token', authenticateToken, authController.useToken);
-router.get('/tokens', authenticateToken, authController.getTokenBalance);
+router.post("/use-token", authenticateToken, authController.useToken);
+router.get("/tokens", authenticateToken, authController.getTokenBalance);
+router.delete("/account", authenticateToken, authController.deleteAccount);
 
 export default router;

@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import NavbarHome from "@/components/home/NavbarHome";
 import ItemCard from "@/components/home/ItemCard";
 import { Button } from "@/components/ui/button";
-import { Filter, Package, HelpCircle, Loader2 } from "lucide-react";
+import { Filter, Package, HelpCircle, Loader2, Zap, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { itemsService } from "@/services/items.service";
+import { requestsService } from "@/services/requests.service";
 import Footer from "@/components/landing/Footer";
 import { formatTimeAgo } from "@/lib/utils";
+import CreateRequestDialog from "@/components/requests/CreateRequestDialog";
 
 const CATEGORIES = [
   { id: "Equipments", label: "Hardware", icon: "⚙️" },
@@ -18,13 +21,38 @@ const CATEGORIES = [
 ];
 
 const Home = () => {
-  const [activeTab, setActiveTab] = useState("listings");
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTab = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(
+    urlTab === "requests" ? "requests" : "listings",
+  );
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const { data: items, isLoading } = useQuery({
+  useEffect(() => {
+    if (urlTab === "requests") {
+      setActiveTab("requests");
+    } else if (urlTab === "listings") {
+      setActiveTab("listings");
+    }
+  }, [urlTab]);
+
+  const { data: items, isLoading: isLoadingItems } = useQuery({
     queryKey: ["items", selectedCategory],
     queryFn: () => itemsService.getItems({ category: selectedCategory }),
+    enabled: activeTab === "listings",
   });
+
+  const { data: requests, isLoading: isLoadingRequests } = useQuery({
+    queryKey: ["requests"],
+    queryFn: requestsService.getRequests,
+    enabled: activeTab === "requests",
+  });
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col font-body">
@@ -34,7 +62,7 @@ const Home = () => {
         {/* Tabs Header */}
         <div className="flex items-center justify-center mb-10 gap-4">
           <button
-            onClick={() => setActiveTab("listings")}
+            onClick={() => handleTabChange("listings")}
             className={`px-8 py-3 rounded-full text-lg font-display font-medium transition-all duration-300 ${
               activeTab === "listings"
                 ? "bg-primary text-primary-foreground shadow-[0_0_20px_hsl(42_100%_62%_/_0.3)] scale-105"
@@ -44,7 +72,7 @@ const Home = () => {
             Item Listings
           </button>
           <button
-            onClick={() => setActiveTab("requests")}
+            onClick={() => handleTabChange("requests")}
             className={`px-8 py-3 rounded-full text-lg font-display font-medium transition-all duration-300 ${
               activeTab === "requests"
                 ? "bg-primary text-primary-foreground shadow-[0_0_20px_hsl(42_100%_62%_/_0.3)] scale-105"
@@ -105,19 +133,17 @@ const Home = () => {
                   <span className="text-foreground">{selectedCategory}</span>
                 </h2>
 
-                {isLoading ? (
+                {isLoadingItems ? (
                   <div className="flex justify-center py-20">
                     <Loader2 className="w-10 h-10 animate-spin text-primary" />
                   </div>
                 ) : items?.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {/* Backend might return items wrapped in { success: true, count: N, data: [] } or just [] 
-                        Adjusting to handle array directly or items.data 
-                    */}
                     {(Array.isArray(items) ? items : items.data || []).map(
                       (item) => (
                         <ItemCard
                           key={item.id}
+                          className="h-full"
                           id={item.id}
                           title={item.title}
                           price={item.price}
@@ -160,21 +186,80 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
-              className="text-center py-32"
+              className="space-y-8"
             >
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-secondary/30 mb-6 text-4xl">
-                ✨
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/30 p-8 rounded-3xl border border-white/5 shadow-xl">
+                <div>
+                  <h2 className="text-3xl font-display font-bold mb-2">
+                    Item Requests
+                  </h2>
+                  <p className="text-muted-foreground max-w-xl">
+                    Browse what others are looking for or make your own request
+                    to find items you need on campus.
+                  </p>
+                </div>
+                <CreateRequestDialog
+                  trigger={
+                    <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-lg rounded-full font-display h-auto">
+                      <HelpCircle className="w-5 h-5 mr-2" /> Make a Request
+                    </Button>
+                  }
+                />
               </div>
-              <h2 className="text-3xl font-display font-bold mb-4">
-                Item Requests
-              </h2>
-              <p className="text-muted-foreground max-w-md mx-auto mb-8">
-                Looking for something specific? Request it here and let others
-                on campus help you find it.
-              </p>
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-lg rounded-full font-display">
-                <HelpCircle className="w-5 h-5 mr-2" /> Make a Request
-              </Button>
+
+              {isLoadingRequests ? (
+                <div className="flex justify-center py-20">
+                  <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                </div>
+              ) : requests?.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {requests.map((request) => (
+                    <motion.div
+                      key={request.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      className="group bg-card border border-white/10 rounded-2xl p-6 hover:border-primary/50 transition-all duration-300 shadow-lg hover:shadow-primary/5 relative overflow-hidden cursor-pointer h-full flex flex-col"
+                      onClick={() => navigate(`/request/${request.id}`)}
+                    >
+                      {request.type === "Urgent" && (
+                        <div className="absolute top-0 right-0">
+                          <div className="bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl flex items-center gap-1 uppercase tracking-tighter">
+                            <Zap className="w-3 h-3 fill-white" /> Urgent
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="flex gap-4 flex-1 items-center">
+                        <div
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner shrink-0 ${request.type === "Urgent" ? "bg-red-500/10" : "bg-primary/10"}`}
+                        >
+                          {request.type === "Urgent" ? "🔥" : "✨"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-display font-bold group-hover:text-primary transition-colors pr-10 truncate">
+                            {request.title}
+                          </h3>
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-1">
+                            <Clock className="w-3 h-3" />
+                            {formatTimeAgo(request.createdAt)}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-20 bg-card/30 rounded-3xl border border-white/5 border-dashed">
+                  <div className="text-6xl mb-4">✨</div>
+                  <h3 className="text-xl font-display font-semibold mb-2">
+                    No requests found
+                  </h3>
+                  <p className="text-muted-foreground">
+                    Be the first one to make a request!
+                  </p>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

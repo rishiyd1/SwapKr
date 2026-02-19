@@ -28,4 +28,12 @@ export const itemsService = {
   getMyListings: async () => {
     return await apiRequest(`${ITEMS_URL}/user/my-listings`, "GET");
   },
+
+  updateItem: async (id, itemData) => {
+    return await apiRequest(`${ITEMS_URL}/${id}`, "PUT", itemData);
+  },
+
+  deleteItem: async (id) => {
+    return await apiRequest(`${ITEMS_URL}/${id}`, "DELETE");
+  },
 };

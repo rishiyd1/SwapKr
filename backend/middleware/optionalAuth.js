@@ -2,15 +2,12 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 
-/**
- * Middleware to attach user to req if token exists, but DOES NOT block if missing.
- * Useful for public routes that want to customize results for logged-in users (like excluding own items).
- */
-const optionalAuthenticateToken = (req, res, next) => {
+const optionalAuth = (req, res, next) => {
   const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  const token = authHeader && authHeader.split(" ")[1]; // Bearer TOKEN
 
-  if (!token) {
+  if (token == null) {
+    // No token, proceed as guest
     return next();
   }
 
@@ -21,9 +18,11 @@ const optionalAuthenticateToken = (req, res, next) => {
       if (!err) {
         req.user = user;
       }
+      // If error (invalid token), we just proceed as guest (or could choose to fail, but optional implies lenient)
+      // Usually better to just ignore invalid tokens for "optional" auth
       next();
     },
   );
 };
 
-export default optionalAuthenticateToken;
+export default optionalAuth;
