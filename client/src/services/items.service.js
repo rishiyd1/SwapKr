@@ -24,4 +24,8 @@ export const itemsService = {
     // The browser sets it with the correct boundary
     return await apiRequest(`${ITEMS_URL}`, "POST", itemData);
   },
+
+  getMyListings: async () => {
+    return await apiRequest(`${ITEMS_URL}/user/my-listings`, "GET");
+  },
 };

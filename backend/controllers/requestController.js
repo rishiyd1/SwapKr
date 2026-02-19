@@ -22,7 +22,11 @@ const validateRequestInput = (title, description, type) => {
   if (title && title.length > 200) {
     errors.push("Title must be 200 characters or less");
   }
-  if (!description || typeof description !== "string" || description.trim().length === 0) {
+  if (
+    !description ||
+    typeof description !== "string" ||
+    description.trim().length === 0
+  ) {
     errors.push("Description is required");
   }
   if (description && description.length > 2000) {
@@ -46,7 +50,9 @@ export const createRequest = async (req, res) => {
     const validationErrors = validateRequestInput(title, description, type);
     if (validationErrors.length > 0) {
       client.release();
-      return res.status(400).json({ message: "Validation failed", errors: validationErrors });
+      return res
+        .status(400)
+        .json({ message: "Validation failed", errors: validationErrors });
     }
 
     // Sanitize for email safety
@@ -115,7 +121,9 @@ export const createRequest = async (req, res) => {
     }
 
     // Fetch updated token count
-    const updatedUser = await User.findById(requesterId, { attributes: ["tokens"] });
+    const updatedUser = await User.findById(requesterId, {
+      attributes: ["tokens"],
+    });
 
     res.status(201).json({
       message: "Request posted successfully",
@@ -124,7 +132,7 @@ export const createRequest = async (req, res) => {
     });
   } catch (error) {
     // Rollback on any error
-    await client.query("ROLLBACK").catch(() => { });
+    await client.query("ROLLBACK").catch(() => {});
     client.release();
     console.error("[createRequest] Error:", error.message);
     res
@@ -140,5 +148,17 @@ export const getRequests = async (req, res) => {
     res.status(200).json(requests);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const getMyRequests = async (req, res) => {
+  try {
+    const requests = await Request.findByRequesterId(req.user.id);
+    res.status(200).json(requests);
+  } catch (error) {
+    console.error("[getMyRequests] Error:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error fetching your requests", error: error.message });
   }
 };

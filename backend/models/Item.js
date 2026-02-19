@@ -7,18 +7,20 @@ const Item = {
     price,
     category,
     pickupLocation,
+    condition,
     sellerId,
     status,
   }) {
     const result = await pool.query(
-      `INSERT INTO items (title, description, price, category, "pickupLocation", "sellerId", status, "createdAt", "updatedAt")
-             VALUES ($1, $2, $3::numeric, $4, $5, $6::integer, $7, NOW(), NOW())
+      `INSERT INTO items (title, description, price, category, condition, "pickupLocation", "sellerId", status, "createdAt", "updatedAt")
+             VALUES ($1, $2, $3::numeric, $4, $5, $6, $7::integer, $8, NOW(), NOW())
              RETURNING *`,
       [
         title,
         description,
         price,
         category || "Others",
+        condition || "Used",
         pickupLocation || null,
         sellerId,
         status || "Available",
@@ -110,6 +112,13 @@ const Item = {
     if (where.sellerId) {
       conditions.push(`i."sellerId" = $${paramIndex}`);
       values.push(where.sellerId);
+      paramIndex++;
+    }
+
+    // Exclude seller filter
+    if (where.excludeSellerId) {
+      conditions.push(`i."sellerId" != $${paramIndex}`);
+      values.push(where.excludeSellerId);
       paramIndex++;
     }
 

@@ -51,12 +51,11 @@ const ListingScene = () => {
             >
               <ItemCard
                 title="Scientific Calculator"
-                price="₹250"
-                condition="Electronics"
+                price="250"
+                category="Electronics"
+                condition="Like New"
                 image={<Calculator className="w-16 h-16 text-primary" />}
-                description="Standard fx-991ES Plus, perfect for engineering exams."
                 className="h-full bg-card/50 backdrop-blur-sm shadow-[0_0_25px_hsl(165_70%_45%_/_0.1)] border-accent hover:shadow-[0_0_40px_hsl(165_70%_45%_/_0.2)]"
-                location="Hostel 1"
                 time="Just now"
               />
             </motion.div>

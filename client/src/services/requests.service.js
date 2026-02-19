@@ -10,4 +10,8 @@ export const requestsService = {
   getRequests: async () => {
     return await apiRequest(`${REQUESTS_URL}`, "GET");
   },
+
+  getMyRequests: async () => {
+    return await apiRequest(`${REQUESTS_URL}/my-requests`, "GET");
+  },
 };
