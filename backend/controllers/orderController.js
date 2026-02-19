@@ -63,6 +63,20 @@ export const sendBuyRequest = async (req, res) => {
     // Fetch with full details
     const fullRequest = await BuyRequest.findByIdWithDetails(buyRequest.id);
 
+    // Notify seller via socket
+    const io = req.app.get("io");
+    if (io) {
+      const { onlineUsers } = await import("../utils/socketStore.js");
+      const sellerId = parseInt(item.sellerId);
+      const sellerSocketId =
+        onlineUsers.get(sellerId.toString()) || onlineUsers.get(sellerId);
+      if (sellerSocketId) {
+        io.to(sellerSocketId).emit("new_buy_request", {
+          buyRequest: fullRequest,
+        });
+      }
+    }
+
     res.status(201).json({
       message: "Buy request sent successfully",
       buyRequest: fullRequest,
@@ -159,12 +173,20 @@ export const acceptRequest = async (req, res) => {
 
     // Fetch full chat with details
     const fullChat = await Chat.findByIdWithDetails(chat.id);
+    console.log(
+      `[acceptRequest] Chat found/created: ${chat.id}, fullChat ID: ${fullChat?.id}`,
+    );
 
     // Notify buyer via socket
     const io = req.app.get("io");
     if (io) {
       const { onlineUsers } = await import("../utils/socketStore.js");
-      const buyerSocketId = onlineUsers.get(buyRequest.buyerId);
+      const buyerId = parseInt(buyRequest.buyerId);
+      const buyerSocketId =
+        onlineUsers.get(buyerId.toString()) || onlineUsers.get(buyerId);
+      console.log(
+        `[acceptRequest] Notifying buyer ${buyerId} at socket ${buyerSocketId}`,
+      );
       if (buyerSocketId) {
         io.to(buyerSocketId).emit("buy_request_accepted", {
           requestId: parseInt(requestId),
@@ -210,14 +232,24 @@ export const rejectRequest = async (req, res) => {
         .json({ message: `Request is already ${buyRequest.status}` });
     }
 
-    // Update request status to Rejected
-    await BuyRequest.update(requestId, { status: "Rejected" });
+    // Create notification for buyer BEFORE deleting
+    await Notification.create({
+      userId: buyRequest.buyerId,
+      type: "buy_request_rejected",
+      content: `Your request for "${buyRequest.item?.title || "an item"}" was rejected.`,
+      relatedId: buyRequest.itemId, // Link to item instead of deleted request
+    });
+
+    // Delete the request as requested
+    await BuyRequest.delete(requestId);
 
     // Notify buyer via socket
     const io = req.app.get("io");
     if (io) {
       const { onlineUsers } = await import("../utils/socketStore.js");
-      const buyerSocketId = onlineUsers.get(buyRequest.buyerId);
+      const buyerId = parseInt(buyRequest.buyerId);
+      const buyerSocketId =
+        onlineUsers.get(buyerId.toString()) || onlineUsers.get(buyerId);
       if (buyerSocketId) {
         io.to(buyerSocketId).emit("buy_request_rejected", {
           requestId: parseInt(requestId),
@@ -283,7 +315,9 @@ export const markAsSold = async (req, res) => {
     const io = req.app.get("io");
     if (io) {
       const { onlineUsers } = await import("../utils/socketStore.js");
-      const buyerSocketId = onlineUsers.get(buyRequest.buyerId);
+      const buyerId = parseInt(buyRequest.buyerId);
+      const buyerSocketId =
+        onlineUsers.get(buyerId.toString()) || onlineUsers.get(buyerId);
       if (buyerSocketId) {
         io.to(buyerSocketId).emit("item_sold", {
           requestId: parseInt(requestId),

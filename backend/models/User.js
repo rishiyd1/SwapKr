@@ -145,6 +145,11 @@ const User = {
     const result = await pool.query(query, values);
     return result.rows;
   },
+
+  async destroy(id) {
+    // Delete user from database
+    await pool.query("DELETE FROM users WHERE id = $1", [id]);
+  },
 };
 
 export default User;

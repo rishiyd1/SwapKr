@@ -7,7 +7,6 @@ import {
   MessageCircle,
   User,
   LogOut,
-  Settings,
   PlusCircle,
   Trash2,
   Check,
@@ -28,12 +27,15 @@ import {
 import { authService } from "@/services/auth.service";
 import { notificationsService } from "@/services/notifications.service";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSocket } from "@/components/chat/SocketContext";
+import { chatsService } from "@/services/chats.service";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
 const NavbarHome = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const queryClient = useQueryClient();
@@ -50,18 +52,35 @@ const NavbarHome = () => {
     enabled: !!user,
   });
 
+  const { socket } = useSocket();
+
+  const { data: unreadSummary, refetch: refetchUnread } = useQuery({
+    queryKey: ["unreadChatSummary"],
+    queryFn: chatsService.getUnreadSummary,
+    refetchInterval: 15000, // Check more frequently for chats
+    enabled: !!user,
+  });
+
+  // Listen for real-time updates to unread counts
+  useEffect(() => {
+    if (socket) {
+      const handleUpdate = () => {
+        refetchUnread();
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      };
+      socket.on("receive_message", handleUpdate);
+      socket.on("new_buy_request", handleUpdate);
+      return () => {
+        socket.off("receive_message", handleUpdate);
+        socket.off("new_buy_request", handleUpdate);
+      };
+    }
+  }, [socket, refetchUnread, queryClient]);
+
   const markReadMutation = useMutation({
     mutationFn: notificationsService.markAsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
-
-  const markAllReadMutation = useMutation({
-    mutationFn: notificationsService.markAllRead,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      toast.success("All notifications marked as read");
     },
   });
 
@@ -79,6 +98,9 @@ const NavbarHome = () => {
 
   const notifications = data?.notifications || [];
   const unreadCount = data?.unreadCount || 0;
+  const displayedNotifications = showAllNotifications
+    ? notifications
+    : notifications.filter((n) => !n.isRead);
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
@@ -116,13 +138,23 @@ const NavbarHome = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground relative"
+            onClick={() => navigate("/chats")}
           >
             <MessageCircle className="h-5 w-5" />
+            {unreadSummary?.totalUnread > 0 && (
+              <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
+                {unreadSummary.totalUnread > 9
+                  ? "9+"
+                  : unreadSummary.totalUnread}
+              </span>
+            )}
           </Button>
 
           {/* Notifications Dropdown */}
-          <DropdownMenu>
+          <DropdownMenu
+            onOpenChange={(open) => !open && setShowAllNotifications(false)}
+          >
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -145,33 +177,45 @@ const NavbarHome = () => {
                 <DropdownMenuLabel className="p-0 font-semibold">
                   Notifications
                 </DropdownMenuLabel>
-                {unreadCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 text-xs text-accent hover:text-accent/80 p-0"
-                    onClick={() => markAllReadMutation.mutate()}
-                  >
-                    Mark all as read
-                  </Button>
-                )}
               </div>
               <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-                {notifications.length === 0 ? (
+                {displayedNotifications.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground flex flex-col items-center gap-2">
                     <Bell className="h-8 w-8 opacity-20" />
-                    <p className="text-sm">No notifications yet</p>
+                    <p className="text-sm">
+                      {showAllNotifications
+                        ? "No notifications yet"
+                        : "No new notifications"}
+                    </p>
+                    {!showAllNotifications && notifications.length > 0 && (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="text-accent"
+                        onClick={() => setShowAllNotifications(true)}
+                      >
+                        View older activity
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col">
-                    {notifications.map((notif) => (
+                    {displayedNotifications.map((notif) => (
                       <div
                         key={notif.id}
-                        className={`flex gap-3 p-4 border-b border-white/5 transition-colors hover:bg-white/5 relative group ${
+                        className={`flex gap-3 p-4 border-b border-white/5 transition-colors hover:bg-white/5 relative group cursor-pointer ${
                           !notif.isRead
                             ? "bg-accent/[0.08] border-l-2 border-l-accent"
                             : "border-l-2 border-l-transparent"
                         }`}
+                        onClick={() => {
+                          if (!notif.isRead) markReadMutation.mutate(notif.id);
+                          if (notif.type === "Request") {
+                            navigate("/home?tab=requests");
+                          } else if (notif.type === "buy_request") {
+                            navigate(`/chats?requestId=${notif.relatedId}`);
+                          }
+                        }}
                       >
                         <div className="flex-1 min-w-0">
                           <p
@@ -203,14 +247,22 @@ const NavbarHome = () => {
                   </div>
                 )}
               </div>
-              <DropdownMenuSeparator className="bg-white/10 m-0" />
-              <Button
-                variant="ghost"
-                className="w-full h-12 rounded-none text-xs text-muted-foreground hover:text-foreground"
-                onClick={() => navigate("/profile?tab=requests")}
-              >
-                View all activity
-              </Button>
+              {!showAllNotifications && notifications.length > unreadCount && (
+                <>
+                  <DropdownMenuSeparator className="bg-white/10 m-0" />
+                  <Button
+                    variant="ghost"
+                    className="w-full h-12 rounded-none text-xs text-muted-foreground hover:text-foreground"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowAllNotifications(true);
+                    }}
+                  >
+                    View all activity
+                  </Button>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -249,9 +301,6 @@ const NavbarHome = () => {
                 <Link to="/profile" className="flex items-center w-full">
                   <User className="mr-2 h-4 w-4" /> Profile
                 </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" /> Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-white/10" />
               <DropdownMenuItem

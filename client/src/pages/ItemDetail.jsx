@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft,
@@ -14,21 +14,42 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
+  Trash2,
 } from "lucide-react";
 import { itemsService } from "@/services/items.service";
+import { ordersService } from "@/services/orders.service";
+import { chatsService } from "@/services/chats.service";
+import { authService } from "@/services/auth.service";
 import { Button } from "@/components/ui/button";
 import NavbarHome from "@/components/home/NavbarHome";
 import Footer from "@/components/landing/Footer";
 import { formatTimeAgo } from "@/lib/utils";
 import { toast } from "sonner";
 import BuyRequestDialog from "@/components/items/BuyRequestDialog";
+import EditItemDialog from "@/components/items/EditItemDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const ItemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
+  const currentUser = authService.getCurrentUser();
+
+  // 1. All Hooks First
   const {
     data: item,
     isLoading,
@@ -38,6 +59,108 @@ const ItemDetail = () => {
     queryFn: () => itemsService.getItemById(id),
   });
 
+  const { data: myRequests } = useQuery({
+    queryKey: ["myRequests"],
+    queryFn: ordersService.getMyRequests,
+    enabled: !!currentUser, // Only fetch if logged in
+  });
+
+  const { data: myConversations } = useQuery({
+    queryKey: ["chats"],
+    queryFn: chatsService.getMyConversations,
+    enabled: !!currentUser,
+  });
+
+  const isOwner = currentUser && item && currentUser.id === item.sellerId;
+
+  // 2. Derived State (Only for non-owners)
+  const existingRequest =
+    !isOwner &&
+    myRequests?.find(
+      (r) =>
+        parseInt(r.itemId) === parseInt(id) &&
+        (r.status === "Pending" ||
+          r.status === "Accepted" ||
+          r.status === "Rejected"),
+    );
+
+  const existingChat =
+    !isOwner &&
+    myConversations?.find((c) => parseInt(c.itemId) === parseInt(id));
+
+  // 3. Helper Functions
+  const getButtonConfig = () => {
+    if (isOwner) return null; // Handled separately
+
+    if (existingChat) {
+      return {
+        text: "Continue Chat",
+        icon: MessageSquare,
+        onClick: () => navigate(`/chats?chatId=${existingChat.id}`),
+        disabled: false,
+        variant: "default",
+      };
+    }
+
+    if (existingRequest) {
+      if (existingRequest.status === "Pending") {
+        return {
+          text: "Request Sent",
+          icon: Clock,
+          onClick: () => {},
+          disabled: true,
+          variant: "secondary",
+        };
+      }
+      if (existingRequest.status === "Rejected") {
+        return {
+          text: "Request Denied",
+          icon: ShieldCheck,
+          onClick: () => {},
+          disabled: true,
+          variant: "destructive",
+        };
+      }
+      if (existingRequest.status === "Accepted") {
+        return {
+          text: "Continue Chat",
+          icon: MessageSquare,
+          onClick: () => navigate(`/chats`),
+          disabled: false,
+          variant: "default",
+        };
+      }
+    }
+
+    return {
+      text: "Contact Seller",
+      icon: MessageSquare,
+      onClick: () => setIsDialogOpen(true),
+      disabled: false,
+      variant: "default",
+    };
+  };
+
+  const buttonConfig = getButtonConfig();
+
+  const handleItemUpdated = () => {
+    queryClient.invalidateQueries(["item", id]);
+  };
+
+  const handleDeleteItem = async () => {
+    setIsDeleting(true);
+    try {
+      await itemsService.deleteItem(id);
+      toast.success("Listing deleted successfully");
+      navigate("/home"); // Redirect to home after delete
+    } catch (error) {
+      toast.error(error.message || "Failed to delete item");
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  // 4. Loading / Error States
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -77,10 +200,6 @@ const ItemDetail = () => {
 
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
-
-  const handleContactSeller = () => {
-    setIsDialogOpen(true);
   };
 
   return (
@@ -148,9 +267,6 @@ const ItemDetail = () => {
                 <div className="px-2.5 py-1 rounded-full bg-primary text-primary-foreground font-display font-bold text-[10px] shadow-lg shadow-primary/20">
                   {item.condition}
                 </div>
-                <div className="px-2.5 py-1 rounded-full bg-background/80 backdrop-blur-md border border-white/10 text-foreground font-display font-bold text-[10px] shadow-xl">
-                  {item.category}
-                </div>
               </div>
             </div>
 
@@ -214,14 +330,10 @@ const ItemDetail = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-[10px] pt-2 border-t border-white/5">
+                <div className="pt-2 border-t border-white/5">
                   <div className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap">
                     <MapPin className="w-3 h-3 text-primary" />
                     {seller.hostel || "Campus Location"}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground whitespace-nowrap">
-                    <Clock className="w-3 h-3 text-primary" />
-                    Listed recently
                   </div>
                 </div>
               </div>
@@ -240,13 +352,50 @@ const ItemDetail = () => {
 
             {/* Action Buttons */}
             <div className="pt-4 border-t border-white/5 flex flex-col gap-2 flex-shrink-0">
-              <Button
-                onClick={handleContactSeller}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-10 rounded-xl font-display text-sm font-bold shadow-lg shadow-primary/10 group"
-              >
-                <MessageSquare className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-                Contact Seller
-              </Button>
+              {isOwner ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <EditItemDialog
+                    item={item}
+                    trigger={
+                      <Button
+                        variant="default"
+                        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+                      >
+                        Edit Listing
+                      </Button>
+                    }
+                    onItemUpdated={handleItemUpdated}
+                  />
+                  <Button
+                    variant="destructive"
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    className="w-full font-bold"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  onClick={buttonConfig.onClick}
+                  disabled={buttonConfig.disabled}
+                  variant={
+                    buttonConfig.variant === "destructive"
+                      ? "destructive"
+                      : "default"
+                  }
+                  className={`w-full h-10 rounded-xl font-display text-sm font-bold shadow-lg shadow-primary/10 group ${
+                    buttonConfig.variant === "default"
+                      ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                      : buttonConfig.variant === "secondary"
+                        ? "bg-secondary text-secondary-foreground"
+                        : "" // Destructive handled by variant prop
+                  }`}
+                >
+                  <buttonConfig.icon className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                  {buttonConfig.text}
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -264,6 +413,40 @@ const ItemDetail = () => {
           seller: seller,
         }}
       />
+
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent className="bg-card text-card-foreground border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your
+              listing and any associated chats/requests.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/10 hover:bg-secondary/50">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDeleteItem}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

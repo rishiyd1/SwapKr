@@ -1,8 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { MapPin, Clock, MessageSquare, Tag } from "lucide-react";
+import { MapPin, Clock, MessageSquare, Tag, ShieldCheck } from "lucide-react"; // Added ShieldCheck
 import { Button } from "@/components/ui/button";
 import BuyRequestDialog from "@/components/items/BuyRequestDialog";
+import { useQuery } from "@tanstack/react-query"; // Added useQuery
+import { ordersService } from "@/services/orders.service"; // Added ordersService
+import { chatsService } from "@/services/chats.service"; // Added chatsService
 
 /**
  * Reusable ItemCard component
@@ -54,15 +57,105 @@ const ItemCard = ({
     }
   };
 
-  const handleContactClick = (e) => {
-    e.stopPropagation();
-    setIsDialogOpen(true);
+  // --- Interaction State Logic ---
+  const { data: myRequests } = useQuery({
+    queryKey: ["myRequests"],
+    queryFn: ordersService.getMyRequests,
+  });
+
+  const { data: myConversations } = useQuery({
+    queryKey: ["chats"],
+    queryFn: chatsService.getMyConversations,
+  });
+
+  const existingRequest = myRequests?.find(
+    (r) =>
+      parseInt(r.itemId) === parseInt(id) &&
+      (r.status === "Pending" ||
+        r.status === "Accepted" ||
+        r.status === "Rejected"),
+  );
+
+  const existingChat = myConversations?.find(
+    (c) => parseInt(c.itemId) === parseInt(id),
+  );
+
+  const getButtonConfig = () => {
+    if (existingChat) {
+      return {
+        text: "Continue Chat",
+        icon: MessageSquare,
+        onClick: (e) => {
+          e.stopPropagation();
+          window.open(`/chats?chatId=${existingChat.id}`, "_blank"); // Open chat in new tab or navigate
+        },
+        disabled: false,
+        variant: "default",
+        className:
+          "bg-primary hover:bg-primary/90 text-primary-foreground border-transparent",
+      };
+    }
+
+    if (existingRequest) {
+      if (existingRequest.status === "Pending") {
+        return {
+          text: "Request Sent",
+          icon: Clock,
+          onClick: (e) => e.stopPropagation(),
+          disabled: true,
+          variant: "secondary",
+          className:
+            "bg-secondary text-secondary-foreground border-transparent",
+        };
+      }
+      if (existingRequest.status === "Rejected") {
+        return {
+          text: "Request Denied",
+          icon: ShieldCheck,
+          onClick: (e) => e.stopPropagation(),
+          disabled: true,
+          variant: "destructive",
+          className:
+            "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20",
+        };
+      }
+      if (existingRequest.status === "Accepted") {
+        return {
+          text: "Continue Chat",
+          icon: MessageSquare,
+          onClick: (e) => {
+            e.stopPropagation();
+            window.open(`/chats`, "_blank");
+          },
+          disabled: false,
+          variant: "default",
+          className:
+            "bg-primary hover:bg-primary/90 text-primary-foreground border-transparent",
+        };
+      }
+    }
+
+    return {
+      text: "Contact Seller",
+      icon: MessageSquare,
+      onClick: (e) => {
+        e.stopPropagation();
+        setIsDialogOpen(true);
+      },
+      disabled: false,
+      variant: "outline",
+      className:
+        "bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground border-primary/20 hover:border-primary",
+    };
   };
+
+  const buttonConfig = getButtonConfig();
+  const ButtonIcon = buttonConfig.icon;
 
   return (
     <>
       <motion.div
-        className={`group relative bg-card/40 border border-white/5 rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 backdrop-blur-sm cursor-pointer ${className}`}
+        className={`group relative bg-card/40 border border-white/5 rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 backdrop-blur-sm cursor-pointer flex flex-col ${className}`}
         whileHover={{ y: -6, boxShadow: "0 20px 40px -20px rgba(0,0,0,0.5)" }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -122,35 +215,41 @@ const ItemCard = ({
         </div>
 
         {/* Content Section */}
-        <div className="p-4 relative z-10">
-          <div className="flex justify-between items-start mb-1">
-            <h3 className="font-display font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-              {title}
-            </h3>
-            <span className="text-primary font-bold text-lg whitespace-nowrap ml-2">
-              ₹{price}
-            </span>
+        <div className="p-4 relative z-10 flex-1 flex flex-col">
+          <div className="flex-1">
+            <div className="flex justify-between items-start mb-1">
+              <h3 className="font-display font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                {title}
+              </h3>
+              <span className="text-primary font-bold text-lg whitespace-nowrap ml-2">
+                ₹{price}
+              </span>
+            </div>
+
+            {/* Category & Time */}
+            <div className="flex items-center gap-3 text-[10px] sm:text-xs text-muted-foreground mb-4">
+              <span className="flex items-center gap-1.5 bg-secondary/50 px-2 py-0.5 rounded-md border border-white/5">
+                <Tag className="w-3 h-3 text-accent" />
+                {category || "Uncategorized"}
+              </span>
+              <span className="flex items-center gap-1.5 ml-auto">
+                <Clock className="w-3 h-3" />
+                {time || "Recently"}
+              </span>
+            </div>
           </div>
 
-          {/* Category & Time */}
-          <div className="flex items-center gap-3 text-[10px] sm:text-xs text-muted-foreground mb-4">
-            <span className="flex items-center gap-1.5 bg-secondary/50 px-2 py-0.5 rounded-md border border-white/5">
-              <Tag className="w-3 h-3 text-accent" />
-              {category || "Uncategorized"}
-            </span>
-            <span className="flex items-center gap-1.5 ml-auto">
-              <Clock className="w-3 h-3" />
-              {time || "Recently"}
-            </span>
-          </div>
-
-          {/* Contact Button */}
+          {/* Dynamic Action Button */}
           <Button
-            className="w-full bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground border-primary/20 hover:border-primary transition-all duration-300 h-10 gap-2 font-display text-xs sm:text-sm font-semibold group/btn"
-            onClick={handleContactClick}
+            className={`w-full transition-all duration-300 h-10 gap-2 font-display text-xs sm:text-sm font-semibold group/btn mt-auto ${buttonConfig.className}`}
+            onClick={buttonConfig.onClick}
+            disabled={buttonConfig.disabled}
+            variant={
+              buttonConfig.variant === "destructive" ? "destructive" : "outline"
+            } // Handle variant prop for destructive/secondary
           >
-            <MessageSquare className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-            Contact Seller
+            <ButtonIcon className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+            {buttonConfig.text}
           </Button>
         </div>
       </motion.div>

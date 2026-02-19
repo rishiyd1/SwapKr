@@ -149,7 +149,13 @@ export const deleteItem = async (req, res) => {
     }
 
     // Delete associated images first
-    await ItemImage.destroyByItemId(item.id);
+    await import("../models/index.js").then(({ ItemImage, Chat }) =>
+      Promise.all([
+        ItemImage.destroyByItemId(item.id),
+        Chat.deleteByItemId(item.id),
+      ]),
+    );
+
     await Item.destroy(item.id);
 
     res.status(200).json({ message: "Item deleted successfully" });

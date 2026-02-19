@@ -557,3 +557,72 @@ export const getTokenBalance = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+// ------------------ DELETE ACCOUNT ------------------
+// DELETE /api/auth/account (protected route)
+export const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { password } = req.body;
+
+    // Import models here, as they are needed before user lookup
+    const { Item, Request, Chat, ItemImage, User } =
+      await import("../models/index.js");
+
+    if (!password) {
+      return res
+        .status(400)
+        .json({ message: "Password is required to delete account" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    // Cascading delete logic
+    // 1. Delete all items listed by user (this will cascade to chats for those items)
+    const items = await Item.findMyListings(userId);
+    for (const item of items) {
+      // Cascading delete for each item
+      await Promise.all([
+        ItemImage.destroyByItemId(item.id),
+        Chat.deleteByItemId(item.id),
+      ]);
+      await Item.destroy(item.id);
+    }
+
+    // 2. Delete all Requests made by user (Requests, Chats)
+    const requests = await Request.findByRequesterId(userId);
+    for (const request of requests) {
+      // Cascading delete for each request
+      await Chat.deleteByRequestId(request.id);
+      await Request.destroy(request.id);
+    }
+
+    // 3. Delete any other chats where user is buyer/seller (Direct chats not linked to items?)
+    // This catches any remaining chats
+    await Chat.deleteByUserId(userId);
+
+    // 4. Delete the User
+    await User.destroy(userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Account and all associated data deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Delete Account Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting account",
+      error: error.message,
+    });
+  }
+};
