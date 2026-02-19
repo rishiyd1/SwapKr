@@ -22,6 +22,7 @@ const BuyerScene = () => {
   return (
     <section
       ref={ref}
+      id="how-it-works"
       className="min-h-screen flex items-center justify-center relative overflow-hidden py-24"
     >
       <motion.div className="max-w-7xl mx-auto px-6 md:px-12">

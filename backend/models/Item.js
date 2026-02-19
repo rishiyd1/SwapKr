@@ -12,7 +12,7 @@ const Item = {
   }) {
     const result = await pool.query(
       `INSERT INTO items (title, description, price, category, "pickupLocation", "sellerId", status, "createdAt", "updatedAt")
-             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+             VALUES ($1, $2, $3::numeric, $4, $5, $6::integer, $7, NOW(), NOW())
              RETURNING *`,
       [
         title,
@@ -41,7 +41,7 @@ const Item = {
              LEFT JOIN users s ON i."sellerId" = s.id
              LEFT JOIN item_images img ON img."itemId" = i.id
              WHERE i.id = $1
-             GROUP BY i.id, s.id`,
+             GROUP BY i.id, s.id, s.name, s.email, s.hostel, s.department, s."phoneNumber"`,
       [id],
     );
     return result.rows[0] || null;
@@ -117,7 +117,8 @@ const Item = {
       query += " WHERE " + conditions.join(" AND ");
     }
 
-    query += ' GROUP BY i.id, s.id ORDER BY i."createdAt" DESC';
+    query +=
+      ' GROUP BY i.id, s.id, s.name, s.email, s.hostel, s."phoneNumber" ORDER BY i."createdAt" DESC';
 
     const result = await pool.query(query, values);
     return result.rows;

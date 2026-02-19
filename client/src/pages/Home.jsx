@@ -2,8 +2,11 @@ import { useState } from "react";
 import NavbarHome from "@/components/home/NavbarHome";
 import ItemCard from "@/components/home/ItemCard";
 import { Button } from "@/components/ui/button";
-import { Filter, Package, HelpCircle } from "lucide-react";
+import { Filter, Package, HelpCircle, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { itemsService } from "@/services/items.service";
+import Footer from "@/components/landing/Footer";
 
 const CATEGORIES = [
   { id: "Equipments", label: "Hardware", icon: "⚙️" },
@@ -13,61 +16,14 @@ const CATEGORIES = [
   { id: "Others", label: "Others", icon: "📦" },
 ];
 
-const MOCK_ITEMS = [
-  {
-    id: 1,
-    title: "Engineering Mathematics",
-    price: "₹450",
-    description: "Brand new condition, rarely used. 5th edition by H.K. Dass.",
-    location: "Hostel 1",
-    time: "2 hrs ago",
-    image: ["📚", "📖", "📔"],
-    condition: "New",
-    category: "Academics",
-  },
-  {
-    id: 2,
-    title: "Badminton Racket",
-    price: "₹800",
-    description: "Yonex Muscle Power 29. String tension 24 lbs.",
-    location: "Hostel 5",
-    time: "5 hrs ago",
-    image: ["🏸", "🎾", "🏆"],
-    condition: "Good",
-    category: "Sports",
-  },
-  {
-    id: 3,
-    title: "Scientific Calculator",
-    price: "₹600",
-    description: "Casio fx-991ES Plus. Works perfectly.",
-    location: "Mega Boys",
-    time: "1 day ago",
-    image: ["🧮", "🔢", "📏"],
-    condition: "Used",
-    category: "Equipments",
-  },
-  {
-    id: 4,
-    title: "Electric Kettle",
-    price: "₹500",
-    description: "Prestige 1.5L. Heats water quickly.",
-    location: "Hostel 9",
-    time: "3 days ago",
-    image: ["🫖", "☕", "🔌"],
-    condition: "Fair",
-    category: "Daily Use",
-  },
-];
-
 const Home = () => {
   const [activeTab, setActiveTab] = useState("listings");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const filteredItems =
-    selectedCategory === "All"
-      ? MOCK_ITEMS
-      : MOCK_ITEMS.filter((item) => item.category === selectedCategory);
+  const { data: items, isLoading } = useQuery({
+    queryKey: ["items", selectedCategory],
+    queryFn: () => itemsService.getItems({ category: selectedCategory }),
+  });
 
   return (
     <div className="min-h-screen bg-background flex flex-col font-body">
@@ -147,20 +103,38 @@ const Home = () => {
                   Showing:{" "}
                   <span className="text-foreground">{selectedCategory}</span>
                 </h2>
-                {filteredItems.length > 0 ? (
+
+                {isLoading ? (
+                  <div className="flex justify-center py-20">
+                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                  </div>
+                ) : items?.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {filteredItems.map((item) => (
-                      <ItemCard
-                        key={item.id}
-                        title={item.title}
-                        price={item.price}
-                        description={item.description}
-                        location={item.location}
-                        time={item.time}
-                        image={item.image}
-                        condition={item.condition}
-                      />
-                    ))}
+                    {/* Backend might return items wrapped in { success: true, count: N, data: [] } or just [] 
+                        Adjusting to handle array directly or items.data 
+                    */}
+                    {(Array.isArray(items) ? items : items.data || []).map(
+                      (item) => (
+                        <ItemCard
+                          key={item.id}
+                          title={item.title}
+                          price={`₹${item.price}`} /* Backend usually sends numbers */
+                          description={item.description}
+                          location={item.location || "Campus"}
+                          time={new Date(item.createdAt).toLocaleDateString()}
+                          image={
+                            Array.isArray(item.images)
+                              ? item.images.length > 0
+                                ? item.images.map((img) => img.imageUrl)
+                                : ["📦"]
+                              : typeof item.images === "string"
+                                ? JSON.parse(item.images)
+                                : ["📦"]
+                          }
+                          condition={item.condition}
+                        />
+                      ),
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-20 bg-card/30 rounded-3xl border border-white/5 border-dashed">
@@ -203,6 +177,7 @@ const Home = () => {
           )}
         </AnimatePresence>
       </main>
+      <Footer />
     </div>
   );
 };
