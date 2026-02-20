@@ -16,6 +16,32 @@ export const createItem = async (req, res) => {
         .json({ message: "Title, price, and category are required" });
     }
 
+    // Validate images constraint
+    if (!req.files || req.files.length < 2) {
+      return res
+        .status(400)
+        .json({ message: "Please provide at least 2 images of the item" });
+    }
+
+    if (req.files.length > 5) {
+      return res
+        .status(400)
+        .json({ message: "You can only upload a maximum of 5 images" });
+    }
+
+    // Validate title and description length
+    if (title.length < 10 || title.length > 60) {
+      return res
+        .status(400)
+        .json({ message: "Title must be between 10 and 60 characters" });
+    }
+
+    if (!description || description.length < 20 || description.length > 300) {
+      return res.status(400).json({
+        message: "Description must be between 20 and 300 characters",
+      });
+    }
+
     const newItem = await Item.create({
       title,
       description,

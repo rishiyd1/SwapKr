@@ -77,7 +77,10 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col font-body">
-      <NavbarHome />
+      <NavbarHome
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+      />
 
       <main className="flex-1 container px-4 pt-4 pb-8 md:px-6 mx-auto max-w-7xl">
         {/* Categories - Connected Segmented Style */}

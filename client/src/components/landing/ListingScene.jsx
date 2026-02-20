@@ -40,9 +40,9 @@ const ListingScene = () => {
           </h2>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-12 items-start">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Left: Listing card with animation */}
-          <motion.div className="relative max-w-[240px] w-full mx-auto md:mr-0">
+          <motion.div className="relative max-w-[240px] w-full mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}

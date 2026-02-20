@@ -50,8 +50,18 @@ const CreateRequestDialog = ({ trigger }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.category) {
-      toast.error("Title and Category are required");
+    if (!formData.title || !formData.category || !formData.description) {
+      toast.error("Title, Category, and Description are required");
+      return;
+    }
+
+    if (formData.title.length < 10 || formData.title.length > 60) {
+      toast.error("Title must be between 10 and 60 characters");
+      return;
+    }
+
+    if (formData.description.length < 20 || formData.description.length > 300) {
+      toast.error("Description must be between 20 and 300 characters");
       return;
     }
 
@@ -104,14 +114,20 @@ const CreateRequestDialog = ({ trigger }) => {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Title <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Title <span className="text-red-500">*</span>
+              </label>
+              <span className="text-xs text-muted-foreground">
+                {formData.title.length}/60
+              </span>
+            </div>
             <Input
               name="title"
-              placeholder="What are you looking for?"
+              placeholder="What are you looking for? (min 10 chars)"
               value={formData.title}
               onChange={handleChange}
+              maxLength={60}
               required
               className="bg-secondary/50 border-white/10"
             />
@@ -139,15 +155,22 @@ const CreateRequestDialog = ({ trigger }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Description
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Description <span className="text-red-500">*</span>
+              </label>
+              <span className="text-xs text-muted-foreground">
+                {formData.description.length}/300
+              </span>
+            </div>
             <Textarea
               name="description"
-              placeholder="Describe what you need..."
+              placeholder="Describe what you need... (min 20 chars)"
               value={formData.description}
               onChange={handleChange}
-              className="bg-secondary/50 border-white/10 resize-none"
+              maxLength={300}
+              required
+              className="bg-secondary/50 border-white/10 resize-none h-24"
             />
           </div>
           <div className="space-y-2">

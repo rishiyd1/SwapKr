@@ -238,7 +238,10 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
           </Sheet>
 
           {/* Logo */}
-          <Link to="/home" className="flex items-center space-x-2 w-32">
+          <Link
+            to="/home"
+            className="flex items-center space-x-2 w-32 ml-4 md:ml-8 lg:ml-12"
+          >
             <SwapkrLogo className="h-6 w-auto" />
           </Link>
         </div>

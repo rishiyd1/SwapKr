@@ -18,6 +18,7 @@ import feedbackRoutes from "./routes/feedback.js";
 import notificationRoutes from "./routes/notifications.js";
 import "./jobs/tokenReset.js";
 import "./jobs/notificationCleanup.js";
+import "./jobs/annualCleanup.js";
 import { initSocket } from "./socket/socket.js";
 
 const server = http.createServer(app);
@@ -32,9 +33,9 @@ app.use(
     origin: (origin, callback) => {
       const allowedOrigins = [
         "http://localhost:5173",
-        "http://localhost:8080",
+        "http://localhost:8081",
         "http://127.0.0.1:5173",
-        "http://127.0.0.1:8080",
+        "http://127.0.0.1:8081",
         process.env.CLIENT_URL,
       ];
 

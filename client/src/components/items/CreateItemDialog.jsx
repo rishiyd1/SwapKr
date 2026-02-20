@@ -59,6 +59,12 @@ const CreateItemDialog = ({ trigger }) => {
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
+
+      if (files.length + newFiles.length > 5) {
+        toast.error("You can only upload a maximum of 5 images");
+        return;
+      }
+
       setFiles((prev) => [...prev, ...newFiles]);
 
       const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
@@ -77,8 +83,33 @@ const CreateItemDialog = ({ trigger }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.price || !formData.category) {
+    if (
+      !formData.title ||
+      !formData.price ||
+      !formData.category ||
+      !formData.description
+    ) {
       toast.error("Please fill all required fields");
+      return;
+    }
+
+    if (formData.title.length < 10 || formData.title.length > 60) {
+      toast.error("Title must be between 10 and 60 characters");
+      return;
+    }
+
+    if (formData.description.length < 20 || formData.description.length > 300) {
+      toast.error("Description must be between 20 and 300 characters");
+      return;
+    }
+
+    if (files.length < 2) {
+      toast.error("Please provide at least 2 images of the item");
+      return;
+    }
+
+    if (files.length > 5) {
+      toast.error("You can only upload a maximum of 5 images");
       return;
     }
 
@@ -134,14 +165,20 @@ const CreateItemDialog = ({ trigger }) => {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none">
-              Title <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium leading-none">
+                Title <span className="text-red-500">*</span>
+              </label>
+              <span className="text-xs text-muted-foreground">
+                {formData.title.length}/60
+              </span>
+            </div>
             <Input
               name="title"
-              placeholder="Item name"
+              placeholder="Item name (min 10 chars)"
               value={formData.title}
               onChange={handleChange}
+              maxLength={60}
               required
               className="bg-secondary/50 border-white/10"
             />
@@ -206,20 +243,34 @@ const CreateItemDialog = ({ trigger }) => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none">
-              Description
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium leading-none">
+                Description <span className="text-red-500">*</span>
+              </label>
+              <span className="text-xs text-muted-foreground">
+                {formData.description.length}/300
+              </span>
+            </div>
             <Textarea
               name="description"
-              placeholder="Describe your item..."
+              placeholder="Describe your item... (min 20 chars)"
               value={formData.description}
               onChange={handleChange}
-              className="bg-secondary/50 border-white/10 resize-none"
+              maxLength={300}
+              required
+              className="bg-secondary/50 border-white/10 resize-none h-24"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium leading-none">Images</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium leading-none">
+                Images <span className="text-red-500">*</span>
+              </label>
+              <span className="text-xs text-muted-foreground">
+                {files.length}/5 (Min 2 required)
+              </span>
+            </div>
             <div className="grid grid-cols-4 gap-2">
               {previews.map((src, index) => (
                 <div
@@ -240,17 +291,20 @@ const CreateItemDialog = ({ trigger }) => {
                   </button>
                 </div>
               ))}
-              <label className="flex flex-col items-center justify-center aspect-square rounded-md border border-dashed border-white/20 hover:bg-secondary/50 cursor-pointer transition-colors">
-                <Upload className="w-6 h-6 text-muted-foreground mb-1" />
-                <span className="text-[10px] text-muted-foreground">Add</span>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </label>
+              {files.length < 5 && (
+                <label className="flex flex-col items-center justify-center aspect-square rounded-md border border-dashed border-white/20 hover:bg-secondary/50 cursor-pointer transition-colors">
+                  <Upload className="w-6 h-6 text-muted-foreground mb-1" />
+                  <span className="text-[10px] text-muted-foreground">Add</span>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileChange}
+                    max={5 - files.length}
+                  />
+                </label>
+              )}
             </div>
           </div>
 
