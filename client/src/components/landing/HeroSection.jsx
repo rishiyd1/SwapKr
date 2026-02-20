@@ -67,7 +67,8 @@ const HeroSection = ({ onLogoActivate }) => {
       <div
         className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.14]"
         style={{
-          background: "radial-gradient(circle, hsl(42 100% 62%) 0%, transparent 70%)",
+          background:
+            "radial-gradient(circle, hsl(42 100% 62%) 0%, transparent 70%)",
         }}
       />
 
@@ -75,7 +76,8 @@ const HeroSection = ({ onLogoActivate }) => {
       <div
         className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full opacity-[0.10]"
         style={{
-          background: "radial-gradient(circle, hsl(165 70% 45%) 0%, transparent 70%)",
+          background:
+            "radial-gradient(circle, hsl(165 70% 45%) 0%, transparent 70%)",
         }}
       />
 
@@ -98,7 +100,11 @@ const HeroSection = ({ onLogoActivate }) => {
           left: scanLeft,
           background:
             "linear-gradient(90deg, hsl(42 100% 62% / 0.015) 0%, transparent 100%)",
-          opacity: useTransform(scanProgress, [0, 5, 90, 100], [0, 0.7, 0.7, 0]),
+          opacity: useTransform(
+            scanProgress,
+            [0, 5, 90, 100],
+            [0, 0.7, 0.7, 0],
+          ),
         }}
       />
 
@@ -110,7 +116,7 @@ const HeroSection = ({ onLogoActivate }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight">
+          <h1 className="font-display text-5xl sm:text-7xl lg:text-8xl font-bold leading-tight tracking-tight">
             Someone in campus needs{" "}
             <span className="text-primary glow-text">what you don't.</span>
           </h1>
@@ -126,13 +132,15 @@ const HeroSection = ({ onLogoActivate }) => {
                 Start swapping
               </Button>
             </Link>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-border text-foreground hover:bg-secondary font-display px-8"
-            >
-              Browse campus
-            </Button>
+            <Link to="/products" onClick={() => onLogoActivate(false)}>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-border text-foreground hover:bg-secondary font-display px-8"
+              >
+                Browse Items
+              </Button>
+            </Link>
           </div>
         </motion.div>
 

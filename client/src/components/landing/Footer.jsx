@@ -87,25 +87,12 @@ const Footer = () => {
                     How it works
                   </a>
                 </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-display font-semibold text-foreground mb-3">
-                Legal
-              </h4>
-              <ul className="space-y-2 text-muted-foreground">
-                <li className="hover:text-foreground transition-colors cursor-pointer">
-                  Privacy
-                </li>
-                <li className="hover:text-foreground transition-colors cursor-pointer">
-                  Terms
-                </li>
                 <li>
                   <a
                     href="/#about"
                     className="hover:text-foreground transition-colors cursor-pointer"
                   >
-                    Contact
+                    Contact Us
                   </a>
                 </li>
               </ul>

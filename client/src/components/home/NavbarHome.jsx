@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useSearchParams,
+  useLocation,
+} from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -10,7 +15,16 @@ import {
   PlusCircle,
   Trash2,
   Check,
+  Store,
+  Menu,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import CreateItemDialog from "../items/CreateItemDialog";
 import CreateRequestDialog from "../requests/CreateRequestDialog";
 import { Button } from "@/components/ui/button";
@@ -32,8 +46,8 @@ import { chatsService } from "@/services/chats.service";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
-const NavbarHome = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
+  // const [searchQuery, setSearchQuery] = useState(""); // Removed local state
   const [isFocused, setIsFocused] = useState(false);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
   const navigate = useNavigate();
@@ -48,7 +62,7 @@ const NavbarHome = () => {
   const { data } = useQuery({
     queryKey: ["notifications"],
     queryFn: notificationsService.getNotifications,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
     enabled: !!user,
   });
 
@@ -57,7 +71,7 @@ const NavbarHome = () => {
   const { data: unreadSummary, refetch: refetchUnread } = useQuery({
     queryKey: ["unreadChatSummary"],
     queryFn: chatsService.getUnreadSummary,
-    refetchInterval: 15000, // Check more frequently for chats
+    refetchInterval: 15000,
     enabled: !!user,
   });
 
@@ -91,6 +105,14 @@ const NavbarHome = () => {
     },
   });
 
+  const markAllReadMutation = useMutation({
+    mutationFn: notificationsService.markAllRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success("All notifications marked as read");
+    },
+  });
+
   const handleLogout = () => {
     authService.logout();
     navigate("/");
@@ -105,15 +127,124 @@ const NavbarHome = () => {
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center px-4 md:px-6">
-        {/* Logo */}
-        <div className="w-32 flex items-center">
-          <Link to="/home" className="flex items-center space-x-2">
+        {/* Logo & Mobile Menu */}
+        <div className="flex items-center gap-2">
+          {/* Mobile Sidebar */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden text-muted-foreground mr-2"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              className="w-80 border-r border-white/10 bg-background/95 backdrop-blur-xl"
+            >
+              <SheetHeader className="mb-8 text-left">
+                <SheetTitle className="flex items-center gap-2">
+                  <SwapkrLogo className="h-6 w-auto" />
+                </SheetTitle>
+              </SheetHeader>
+
+              <div className="flex flex-col gap-6">
+                {/* User Info (Mobile) */}
+                {user && (
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/50 border border-white/5">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="font-semibold truncate">
+                        {user.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {user.email}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Navigation Links */}
+                <div className="flex flex-col gap-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
+                    Menu
+                  </h4>
+                  <Link to="/home">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-3 h-12"
+                    >
+                      <Store className="h-5 w-5" /> Home
+                    </Button>
+                  </Link>
+                  <Link to="/chats">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-3 h-12"
+                    >
+                      <MessageCircle className="h-5 w-5" /> Chats
+                      {unreadSummary?.totalUnread > 0 && (
+                        <span className="ml-auto bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                          {unreadSummary.totalUnread}
+                        </span>
+                      )}
+                    </Button>
+                  </Link>
+                  <Link to="/profile">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-3 h-12"
+                    >
+                      <User className="h-5 w-5" /> Profile
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2 mt-4">
+                    Actions
+                  </h4>
+                  <CreateItemDialog
+                    trigger={
+                      <Button className="w-full justify-start gap-3 h-12 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20">
+                        <PlusCircle className="h-5 w-5" /> Post Item
+                      </Button>
+                    }
+                  />
+                  <CreateRequestDialog
+                    trigger={
+                      <Button className="w-full justify-start gap-3 h-12 bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20 shadow-lg shadow-accent/5">
+                        <PlusCircle className="h-5 w-5" /> Request Item
+                      </Button>
+                    }
+                  />
+                </div>
+
+                <div className="mt-auto pt-8">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-5 w-5" /> Logout
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Logo */}
+          <Link to="/home" className="flex items-center space-x-2 w-32">
             <SwapkrLogo className="h-6 w-auto" />
           </Link>
         </div>
 
         {/* Search Bar */}
-        <div className="hidden md:flex flex-1 justify-center px-4 pl-12 h-full items-center">
+        <div className="hidden md:flex flex-1 justify-center px-4 pl-8 h-full items-center">
           <motion.div
             initial={false}
             animate={{ maxWidth: isFocused ? "42rem" : "24rem" }}
@@ -128,10 +259,12 @@ const NavbarHome = () => {
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
             />
           </motion.div>
         </div>
+
+        {/* Right Actions */}
 
         {/* Right Actions */}
         <div className="flex items-center gap-2 ml-auto">
@@ -177,6 +310,19 @@ const NavbarHome = () => {
                 <DropdownMenuLabel className="p-0 font-semibold">
                   Notifications
                 </DropdownMenuLabel>
+                {unreadCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto px-2 py-1 text-xs text-accent hover:text-accent/80 hover:bg-accent/10 -mr-2"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      markAllReadMutation.mutate();
+                    }}
+                  >
+                    Mark all as read
+                  </Button>
+                )}
               </div>
               <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
                 {displayedNotifications.length === 0 ? (

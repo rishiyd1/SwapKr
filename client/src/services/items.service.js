@@ -9,6 +9,9 @@ export const itemsService = {
     if (filters.category && filters.category !== "All") {
       queryParams.append("category", filters.category);
     }
+    if (filters.search) {
+      queryParams.append("search", filters.search);
+    }
     const queryString = queryParams.toString();
     const url = queryString ? `${ITEMS_URL}?${queryString}` : ITEMS_URL;
 

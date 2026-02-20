@@ -37,7 +37,7 @@ const BuyRequest = {
 
   async findOne({ buyerId, itemId }) {
     const result = await pool.query(
-      'SELECT * FROM buy_requests WHERE "buyerId" = $1 AND "itemId" = $2 AND status = \'Pending\'',
+      'SELECT * FROM buy_requests WHERE "buyerId" = $1 AND "itemId" = $2',
       [buyerId, itemId],
     );
     return result.rows[0] || null;
@@ -51,7 +51,7 @@ const BuyRequest = {
        FROM buy_requests br
        LEFT JOIN users b ON br."buyerId" = b.id
        LEFT JOIN items i ON br."itemId" = i.id
-       WHERE br."sellerId" = $1
+       WHERE br."sellerId" = $1 AND br.status != 'Rejected'
        ORDER BY CASE br.status WHEN 'Pending' THEN 0 WHEN 'Accepted' THEN 1 ELSE 2 END, br."createdAt" DESC`,
       [sellerId],
     );

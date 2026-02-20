@@ -3,10 +3,11 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { pool } from "./models/index.js";
 import http from "http";
+import morgan from "morgan";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 import authRoutes from "./routes/auth.js";
 import itemRoutes from "./routes/items.js";
@@ -23,12 +24,29 @@ const server = http.createServer(app);
 const io = initSocket(server);
 
 app.set("io", io);
+app.use(morgan("dev"));
 
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:8080", "http://127.0.0.1:8080"],
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "http://localhost:5173",
+        "http://localhost:8080",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8080",
+        process.env.CLIENT_URL,
+      ];
+
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) !== -1 || !process.env.CLIENT_URL) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   }),
 );

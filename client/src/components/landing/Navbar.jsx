@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import SwapkrLogo from "./SwapkrLogo";
 import { Button } from "@/components/ui/button";
 import { authService } from "@/services/auth.service";
+import { Store } from "lucide-react";
 
 const Navbar = ({ logoActivated }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -30,6 +31,13 @@ const Navbar = ({ logoActivated }) => {
             >
               How it works
             </a>
+            <Link
+              to="/products"
+              className="text-sm font-body text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
+            >
+              <Store className="h-3.5 w-3.5" />
+              Browse
+            </Link>
             <a
               href="#about"
               className="text-sm font-body text-muted-foreground hover:text-foreground transition-colors"
@@ -38,15 +46,37 @@ const Navbar = ({ logoActivated }) => {
             </a>
           </div>
 
-          <Link to={user ? "/home" : "/login"}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-primary/30 text-primary hover:bg-primary/10 font-display text-sm"
-            >
-              {user ? "Browse" : "Login"}
-            </Button>
-          </Link>
+          {user ? (
+            <Link to="/home">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-primary/30 text-primary hover:bg-primary/10 font-display text-sm"
+              >
+                Browse
+              </Button>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link to="/login">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground font-display text-sm"
+                >
+                  Login
+                </Button>
+              </Link>
+              <Link to="/login?mode=signup">
+                <Button
+                  size="sm"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-display text-sm shadow-sm shadow-primary/20"
+                >
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </nav>

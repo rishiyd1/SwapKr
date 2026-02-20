@@ -7,8 +7,12 @@ export const requestsService = {
     return await apiRequest(`${REQUESTS_URL}`, "POST", requestData);
   },
 
-  getRequests: async () => {
-    return await apiRequest(`${REQUESTS_URL}`, "GET");
+  getRequests: async ({ category } = {}) => {
+    let url = `${REQUESTS_URL}`;
+    if (category && category !== "All") {
+      url += `?category=${encodeURIComponent(category)}`;
+    }
+    return await apiRequest(url, "GET");
   },
 
   getMyRequests: async () => {

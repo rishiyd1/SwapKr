@@ -82,9 +82,11 @@ const Item = {
     values.push(status);
     paramIndex++;
 
-    // Search by title
+    // Search by title or description
     if (search) {
-      conditions.push(`i.title ILIKE $${paramIndex}`);
+      conditions.push(
+        `(i.title ILIKE $${paramIndex} OR i.description ILIKE $${paramIndex})`,
+      );
       values.push(`%${search}%`);
       paramIndex++;
     }

@@ -12,8 +12,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Edit, Zap } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { requestsService } from "@/services/requests.service";
+
+const CATEGORIES = ["Hardware", "Daily Use", "Academics", "Sports", "Others"];
 
 const EditRequestDialog = ({ request, trigger, onRequestUpdated }) => {
   const [open, setOpen] = useState(false);
@@ -22,6 +31,7 @@ const EditRequestDialog = ({ request, trigger, onRequestUpdated }) => {
     title: "",
     description: "",
     budget: "",
+    category: "",
   });
 
   useEffect(() => {
@@ -30,6 +40,7 @@ const EditRequestDialog = ({ request, trigger, onRequestUpdated }) => {
         title: request.title || "",
         description: request.description || "",
         budget: request.budget || "",
+        category: request.category || "",
       });
     }
   }, [request, open]);
@@ -39,10 +50,14 @@ const EditRequestDialog = ({ request, trigger, onRequestUpdated }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleCategoryChange = (value) => {
+    setFormData((prev) => ({ ...prev, category: value }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title) {
-      toast.error("Title is required");
+    if (!formData.title || !formData.category) {
+      toast.error("Title and Category are required");
       return;
     }
 
@@ -52,6 +67,7 @@ const EditRequestDialog = ({ request, trigger, onRequestUpdated }) => {
         title: formData.title,
         description: formData.description,
         budget: formData.budget ? parseFloat(formData.budget) : null,
+        category: formData.category,
       };
       await requestsService.updateRequest(request.id, submitData);
       toast.success("Request updated successfully!");
@@ -95,6 +111,28 @@ const EditRequestDialog = ({ request, trigger, onRequestUpdated }) => {
               className="bg-secondary/50 border-white/10"
             />
           </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none">
+              Category <span className="text-red-500">*</span>
+            </label>
+            <Select
+              onValueChange={handleCategoryChange}
+              value={formData.category}
+            >
+              <SelectTrigger className="bg-secondary/50 border-white/10">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium leading-none">
               Description

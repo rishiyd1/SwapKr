@@ -32,7 +32,7 @@ const Index = () => {
       <ExclusivityBar />
       <Navbar logoActivated={logoActivated} />
       <HeroSection onLogoActivate={setLogoActivated} />
-      <div className="relative overflow-hidden">
+      <div className="flex flex-col gap-32 relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-[0.06] pointer-events-none"
           style={{

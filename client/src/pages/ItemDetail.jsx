@@ -16,7 +16,7 @@ import {
   Info,
   Trash2,
 } from "lucide-react";
-import { itemsService } from "@/services/items.service";
+import { useItem, useDeleteItem } from "@/hooks/useItems";
 import { ordersService } from "@/services/orders.service";
 import { chatsService } from "@/services/chats.service";
 import { authService } from "@/services/auth.service";
@@ -45,19 +45,12 @@ const ItemDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const currentUser = authService.getCurrentUser();
+  const deleteItemMutation = useDeleteItem();
 
   // 1. All Hooks First
-  const {
-    data: item,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["item", id],
-    queryFn: () => itemsService.getItemById(id),
-  });
+  const { data: item, isLoading, error } = useItem(id);
 
   const { data: myRequests } = useQuery({
     queryKey: ["myRequests"],
@@ -147,17 +140,8 @@ const ItemDetail = () => {
     queryClient.invalidateQueries(["item", id]);
   };
 
-  const handleDeleteItem = async () => {
-    setIsDeleting(true);
-    try {
-      await itemsService.deleteItem(id);
-      toast.success("Listing deleted successfully");
-      navigate("/home"); // Redirect to home after delete
-    } catch (error) {
-      toast.error(error.message || "Failed to delete item");
-      setIsDeleting(false);
-      setIsDeleteDialogOpen(false);
-    }
+  const handleDeleteItem = () => {
+    deleteItemMutation.mutate(id);
   };
 
   // 4. Loading / Error States
@@ -433,9 +417,9 @@ const ItemDetail = () => {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleDeleteItem}
-              disabled={isDeleting}
+              disabled={deleteItemMutation.isPending}
             >
-              {isDeleting ? (
+              {deleteItemMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Deleting...
