@@ -1,4 +1,4 @@
-import { Request, User, pool } from "../models/index.js";
+import { Request, User, Notification, pool } from "../models/index.js";
 import { addEmailJob } from "../queues/emailQueue.js";
 
 // ─── HTML Sanitization ─────────────────────────────────────────────────
@@ -22,7 +22,11 @@ const validateRequestInput = (title, description, type) => {
   if (title && title.length > 200) {
     errors.push("Title must be 200 characters or less");
   }
-  if (!description || typeof description !== "string" || description.trim().length === 0) {
+  if (
+    !description ||
+    typeof description !== "string" ||
+    description.trim().length === 0
+  ) {
     errors.push("Description is required");
   }
   if (description && description.length > 2000) {
@@ -39,14 +43,16 @@ export const createRequest = async (req, res) => {
   const client = await pool.connect(); // Grab a client for transaction
 
   try {
-    const { title, description, type } = req.body;
+    const { title, description, type, category } = req.body;
     const requesterId = req.user.id;
 
     // Validate input
     const validationErrors = validateRequestInput(title, description, type);
     if (validationErrors.length > 0) {
       client.release();
-      return res.status(400).json({ message: "Validation failed", errors: validationErrors });
+      return res
+        .status(400)
+        .json({ message: "Validation failed", errors: validationErrors });
     }
 
     // Sanitize for email safety
@@ -92,10 +98,17 @@ export const createRequest = async (req, res) => {
 
     // Create the request within the same transaction
     const requestResult = await client.query(
-      `INSERT INTO requests (title, description, type, "tokenCost", "requesterId", status, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, 'Open', NOW(), NOW())
+      `INSERT INTO requests (title, description, type, "tokenCost", "requesterId", status, category, "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, 'Open', $6, NOW(), NOW())
        RETURNING *`,
-      [safeTitle, safeDescription, type || "Normal", tokenCost, requesterId],
+      [
+        safeTitle,
+        safeDescription,
+        type || "Normal",
+        tokenCost,
+        requesterId,
+        category || "Others",
+      ],
     );
     const newRequest = requestResult.rows[0];
 
@@ -103,19 +116,44 @@ export const createRequest = async (req, res) => {
     await client.query("COMMIT");
     client.release();
 
-    // Enqueue email job AFTER commit (outside transaction — fire and forget)
-    if (type === "Urgent") {
-      await addEmailJob({
-        title: safeTitle,
-        description: safeDescription,
-        requesterName: sanitize(user.name),
-        requesterId,
-        requestId: newRequest.id,
+    // ── NOTIFICATIONS ──
+
+    // 1. Create App Notifications (Persistent) for ALL users
+    try {
+      await Notification.createBatchForRequest({
+        type: "Request",
+        content: `New ${type === "Urgent" ? "Urgent " : ""}Request: ${safeTitle}`,
+        relatedId: newRequest.id,
+        excludedUserId: requesterId,
       });
+    } catch (notifError) {
+      console.error("[createRequest] Notification error:", notifError.message);
+      // Don't fail the request if notifications fail
+    }
+
+    // 2. Enqueue Email Job for URGENT requests
+    if (type === "Urgent") {
+      try {
+        await addEmailJob({
+          title: safeTitle,
+          description: safeDescription,
+          requesterName: sanitize(user.name),
+          requesterId,
+          requestId: newRequest.id,
+        });
+      } catch (emailError) {
+        console.error(
+          "[createRequest] Failed to queue email job (Redis unavailable?):",
+          emailError.message,
+        );
+        // Do NOT rollback or fail the request; just log the error
+      }
     }
 
     // Fetch updated token count
-    const updatedUser = await User.findById(requesterId, { attributes: ["tokens"] });
+    const updatedUser = await User.findById(requesterId, {
+      attributes: ["tokens"],
+    });
 
     res.status(201).json({
       message: "Request posted successfully",
@@ -124,7 +162,7 @@ export const createRequest = async (req, res) => {
     });
   } catch (error) {
     // Rollback on any error
-    await client.query("ROLLBACK").catch(() => { });
+    await client.query("ROLLBACK").catch(() => {});
     client.release();
     console.error("[createRequest] Error:", error.message);
     res
@@ -135,10 +173,108 @@ export const createRequest = async (req, res) => {
 
 export const getRequests = async (req, res) => {
   try {
-    const requests = await Request.findAllOpen();
+    const currentUserId = req.user ? req.user.id : null;
+    const { category } = req.query;
+    const requests = await Request.findAllOpen(currentUserId, category);
 
     res.status(200).json(requests);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const getMyRequests = async (req, res) => {
+  try {
+    const requests = await Request.findByRequesterId(req.user.id);
+    res.status(200).json(requests);
+  } catch (error) {
+    console.error("[getMyRequests] Error:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error fetching your requests", error: error.message });
+  }
+};
+
+export const getRequestById = async (req, res) => {
+  try {
+    const request = await Request.findByIdWithDetails(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    res.status(200).json(request);
+  } catch (error) {
+    console.error("[getRequestById] Error:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error fetching request", error: error.message });
+  }
+};
+
+export const updateRequest = async (req, res) => {
+  try {
+    const { title, description, type, status } = req.body;
+    const request = await Request.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    if (request.requesterId !== req.user.id) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to update this request" });
+    }
+
+    const fields = {};
+    if (title) fields.title = sanitize(title.trim());
+    if (description) fields.description = sanitize(description.trim());
+    // if (type) fields.type = type; // Prevent changing type after creation
+    if (status) fields.status = status;
+
+    const updatedRequest = await Request.update(req.params.id, fields);
+
+    res.status(200).json({
+      message: "Request updated successfully",
+      request: updatedRequest,
+    });
+  } catch (error) {
+    console.error("[updateRequest] Error:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error updating request", error: error.message });
+  }
+};
+
+export const deleteRequest = async (req, res) => {
+  try {
+    const request = await Request.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    if (request.requesterId !== req.user.id) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to delete this request" });
+    }
+
+    // Delete associated chats (and their messages via helper)
+    // Note: We need to import Chat model if not already imported
+    // Since we are using index.js export, verify Chat is available
+    await import("../models/index.js").then(({ Chat }) =>
+      Chat.deleteByRequestId(request.id),
+    );
+
+    await Request.destroy(request.id);
+
+    res.status(200).json({ message: "Request deleted successfully" });
+  } catch (error) {
+    console.error("[deleteRequest] Error:", error.message);
+    res
+      .status(500)
+      .json({ message: "Error deleting request", error: error.message });
   }
 };

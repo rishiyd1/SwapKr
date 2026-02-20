@@ -1,14 +1,32 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import {
+  Link,
+  useNavigate,
+  useSearchParams,
+  useLocation,
+} from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   Bell,
   MessageCircle,
   User,
   LogOut,
-  Settings,
   PlusCircle,
+  Trash2,
+  Check,
+  Store,
+  Menu,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import CreateItemDialog from "../items/CreateItemDialog";
+import CreateRequestDialog from "../requests/CreateRequestDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SwapkrLogo from "@/components/landing/SwapkrLogo";
@@ -20,57 +38,382 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { authService } from "@/services/auth.service";
+import { notificationsService } from "@/services/notifications.service";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSocket } from "@/components/chat/SocketContext";
+import { chatsService } from "@/services/chats.service";
+import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
-const NavbarHome = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
+  // const [searchQuery, setSearchQuery] = useState(""); // Removed local state
+  const [isFocused, setIsFocused] = useState(false);
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const currentUser = authService.getCurrentUser();
+    setUser(currentUser);
+  }, []);
+
+  const { data } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: notificationsService.getNotifications,
+    refetchInterval: 30000,
+    enabled: !!user,
+  });
+
+  const { socket } = useSocket();
+
+  const { data: unreadSummary, refetch: refetchUnread } = useQuery({
+    queryKey: ["unreadChatSummary"],
+    queryFn: chatsService.getUnreadSummary,
+    refetchInterval: 15000,
+    enabled: !!user,
+  });
+
+  // Listen for real-time updates to unread counts
+  useEffect(() => {
+    if (socket) {
+      const handleUpdate = () => {
+        refetchUnread();
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      };
+      socket.on("receive_message", handleUpdate);
+      socket.on("new_buy_request", handleUpdate);
+      return () => {
+        socket.off("receive_message", handleUpdate);
+        socket.off("new_buy_request", handleUpdate);
+      };
+    }
+  }, [socket, refetchUnread, queryClient]);
+
+  const markReadMutation = useMutation({
+    mutationFn: notificationsService.markAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: notificationsService.deleteNotification,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: notificationsService.markAllRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      toast.success("All notifications marked as read");
+    },
+  });
+
+  const handleLogout = () => {
+    authService.logout();
+    navigate("/");
+  };
+
+  const notifications = data?.notifications || [];
+  const unreadCount = data?.unreadCount || 0;
+  const displayedNotifications = showAllNotifications
+    ? notifications
+    : notifications.filter((n) => !n.isRead);
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center px-4 md:px-6">
-        {/* Logo */}
-        <Link to="/home" className="mr-6 flex items-center space-x-2">
-          <SwapkrLogo className="h-6 w-auto" />
-        </Link>
+        {/* Logo & Mobile Menu */}
+        <div className="flex items-center gap-2">
+          {/* Mobile Sidebar */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden text-muted-foreground mr-2"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              className="w-80 border-r border-white/10 bg-background/95 backdrop-blur-xl"
+            >
+              <SheetHeader className="mb-8 text-left">
+                <SheetTitle className="flex items-center gap-2">
+                  <SwapkrLogo className="h-6 w-auto" />
+                </SheetTitle>
+              </SheetHeader>
 
-        {/* Search Bar (Hidden on mobile, uses full width on desktop) */}
-        <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search for books, electronics, furniture..."
-            className="pl-10 bg-secondary/50 border-white/5 focus-visible:ring-accent"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+              <div className="flex flex-col gap-6">
+                {/* User Info (Mobile) */}
+                {user && (
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-secondary/50 border border-white/5">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                      <User className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="font-semibold truncate">
+                        {user.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {user.email}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Navigation Links */}
+                <div className="flex flex-col gap-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">
+                    Menu
+                  </h4>
+                  <Link to="/home">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-3 h-12"
+                    >
+                      <Store className="h-5 w-5" /> Home
+                    </Button>
+                  </Link>
+                  <Link to="/chats">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-3 h-12"
+                    >
+                      <MessageCircle className="h-5 w-5" /> Chats
+                      {unreadSummary?.totalUnread > 0 && (
+                        <span className="ml-auto bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                          {unreadSummary.totalUnread}
+                        </span>
+                      )}
+                    </Button>
+                  </Link>
+                  <Link to="/profile">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-3 h-12"
+                    >
+                      <User className="h-5 w-5" /> Profile
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2 mt-4">
+                    Actions
+                  </h4>
+                  <CreateItemDialog
+                    trigger={
+                      <Button className="w-full justify-start gap-3 h-12 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20">
+                        <PlusCircle className="h-5 w-5" /> Post Item
+                      </Button>
+                    }
+                  />
+                  <CreateRequestDialog
+                    trigger={
+                      <Button className="w-full justify-start gap-3 h-12 bg-accent/10 text-accent hover:bg-accent/20 border border-accent/20 shadow-lg shadow-accent/5">
+                        <PlusCircle className="h-5 w-5" /> Request Item
+                      </Button>
+                    }
+                  />
+                </div>
+
+                <div className="mt-auto pt-8">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="h-5 w-5" /> Logout
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Logo */}
+          <Link to="/home" className="flex items-center space-x-2 w-32">
+            <SwapkrLogo className="h-6 w-auto" />
+          </Link>
+        </div>
+
+        {/* Search Bar */}
+        <div className="hidden md:flex flex-1 justify-center px-4 pl-8 h-full items-center">
+          <motion.div
+            initial={false}
+            animate={{ maxWidth: isFocused ? "42rem" : "24rem" }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="relative w-full"
+          >
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search for books, electronics, furniture..."
+              className="pl-10 bg-secondary/50 border-white/5 focus-visible:ring-accent w-full transition-all duration-300"
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              value={searchQuery}
+              onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
+            />
+          </motion.div>
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2 ml-auto">
-          {/* Mobile Search Trigger could go here */}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <MessageCircle className="h-5 w-5" />
-          </Button>
+        {/* Right Actions */}
+        <div className="flex items-center gap-2 ml-auto">
           <Button
             variant="ghost"
             size="icon"
             className="text-muted-foreground hover:text-foreground relative"
+            onClick={() => navigate("/chats")}
           >
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-background" />
+            <MessageCircle className="h-5 w-5" />
+            {unreadSummary?.totalUnread > 0 && (
+              <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
+                {unreadSummary.totalUnread > 9
+                  ? "9+"
+                  : unreadSummary.totalUnread}
+              </span>
+            )}
           </Button>
 
-          <Button
-            size="sm"
-            className="hidden sm:flex bg-accent hover:bg-accent/90 text-accent-foreground font-display ml-2 gap-2"
+          {/* Notifications Dropdown */}
+          <DropdownMenu
+            onOpenChange={(open) => !open && setShowAllNotifications(false)}
           >
-            <PlusCircle className="h-4 w-4" />
-            Sell Item
-          </Button>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-foreground relative"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-80 bg-card border-white/10 text-card-foreground p-0 overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-white/10">
+                <DropdownMenuLabel className="p-0 font-semibold">
+                  Notifications
+                </DropdownMenuLabel>
+                {unreadCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto px-2 py-1 text-xs text-accent hover:text-accent/80 hover:bg-accent/10 -mr-2"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      markAllReadMutation.mutate();
+                    }}
+                  >
+                    Mark all as read
+                  </Button>
+                )}
+              </div>
+              <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                {displayedNotifications.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground flex flex-col items-center gap-2">
+                    <Bell className="h-8 w-8 opacity-20" />
+                    <p className="text-sm">
+                      {showAllNotifications
+                        ? "No notifications yet"
+                        : "No new notifications"}
+                    </p>
+                    {!showAllNotifications && notifications.length > 0 && (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="text-accent"
+                        onClick={() => setShowAllNotifications(true)}
+                      >
+                        View older activity
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col">
+                    {displayedNotifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        className={`flex gap-3 p-4 border-b border-white/5 transition-colors hover:bg-white/5 relative group cursor-pointer ${
+                          !notif.isRead
+                            ? "bg-accent/[0.08] border-l-2 border-l-accent"
+                            : "border-l-2 border-l-transparent"
+                        }`}
+                        onClick={() => {
+                          if (!notif.isRead) markReadMutation.mutate(notif.id);
+                          if (notif.type === "Request") {
+                            navigate("/home?tab=requests");
+                          } else if (notif.type === "buy_request") {
+                            navigate(`/chats?requestId=${notif.relatedId}`);
+                          }
+                        }}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={`text-sm leading-tight mb-1 ${!notif.isRead ? "font-semibold pr-6" : ""}`}
+                          >
+                            {notif.content}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {formatDistanceToNow(new Date(notif.createdAt), {
+                              addSuffix: true,
+                            })}
+                          </p>
+                        </div>
+                        {!notif.isRead && (
+                          <button
+                            onClick={() => markReadMutation.mutate(notif.id)}
+                            className="absolute right-4 top-4 h-2 w-2 rounded-full bg-accent"
+                            title="Mark as read"
+                          />
+                        )}
+                        <button
+                          onClick={() => deleteMutation.mutate(notif.id)}
+                          className="opacity-0 group-hover:opacity-100 absolute right-4 bottom-4 text-muted-foreground hover:text-red-500 transition-opacity"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {!showAllNotifications && notifications.length > unreadCount && (
+                <>
+                  <DropdownMenuSeparator className="bg-white/10 m-0" />
+                  <Button
+                    variant="ghost"
+                    className="w-full h-12 rounded-none text-xs text-muted-foreground hover:text-foreground"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowAllNotifications(true);
+                    }}
+                  >
+                    View all activity
+                  </Button>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <CreateRequestDialog />
+          <CreateItemDialog />
 
           {/* Profile Dropdown */}
           <DropdownMenu>
@@ -87,19 +430,32 @@ const NavbarHome = () => {
               align="end"
               className="w-56 bg-card border-white/10 text-card-foreground"
             >
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                {user ? (
+                  <div className="flex flex-col">
+                    <span>{user.name}</span>
+                    <span className="text-xs text-muted-foreground font-normal">
+                      {user.email}
+                    </span>
+                  </div>
+                ) : (
+                  "My Account"
+                )}
+              </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-white/10" />
               <DropdownMenuItem className="cursor-pointer">
-                <User className="mr-2 h-4 w-4" /> Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" /> Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-white/10" />
-              <DropdownMenuItem className="cursor-pointer text-red-500 focus:text-red-500">
-                <Link to="/" className="flex items-center w-full">
-                  <LogOut className="mr-2 h-4 w-4" /> Log out
+                <Link to="/profile" className="flex items-center w-full">
+                  <User className="mr-2 h-4 w-4" /> Profile
                 </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem
+                className="cursor-pointer text-red-500 focus:text-red-500"
+                onClick={handleLogout}
+              >
+                <div className="flex items-center w-full">
+                  <LogOut className="mr-2 h-4 w-4" /> Log out
+                </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -13,40 +13,55 @@ import { Worker } from "bullmq";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import pg from "pg";
-import IORedis from "ioredis";
+// import IORedis from "ioredis"; // Removed as we use the shared config
+import redisConnection from "../config/redis.js";
 
 dotenv.config();
 
 // ─── Structured Logger ─────────────────────────────────────────────────
 const log = {
   info: (msg, meta = {}) =>
-    console.log(JSON.stringify({ level: "info", ts: new Date().toISOString(), msg, ...meta })),
+    console.log(
+      JSON.stringify({
+        level: "info",
+        ts: new Date().toISOString(),
+        msg,
+        ...meta,
+      }),
+    ),
   warn: (msg, meta = {}) =>
-    console.warn(JSON.stringify({ level: "warn", ts: new Date().toISOString(), msg, ...meta })),
+    console.warn(
+      JSON.stringify({
+        level: "warn",
+        ts: new Date().toISOString(),
+        msg,
+        ...meta,
+      }),
+    ),
   error: (msg, meta = {}) =>
-    console.error(JSON.stringify({ level: "error", ts: new Date().toISOString(), msg, ...meta })),
+    console.error(
+      JSON.stringify({
+        level: "error",
+        ts: new Date().toISOString(),
+        msg,
+        ...meta,
+      }),
+    ),
 };
 
-// ─── Redis Connection (separate instance for the worker) ───────────────
-const redisConnection = new IORedis({
-  host: process.env.REDIS_HOST || "localhost",
-  port: parseInt(process.env.REDIS_PORT) || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
-  maxRetriesPerRequest: null,
-  retryStrategy(times) {
-    const delay = Math.min(times * 50, 30_000);
-    log.warn("Redis reconnecting", { attempt: times, delayMs: delay });
-    return delay;
-  },
-});
+// ─── Redis Connection ──────────────────────────────────────────────────
+// Uses the shared configuration which supports REDIS_URL
+// The import 'redisConnection' is already an IORedis instance
 
 // ─── Database Pool ─────────────────────────────────────────────────────
+// ─── Database Pool ─────────────────────────────────────────────────────
+const isLocal =
+  (process.env.DATABASE_URL || "").includes("localhost") ||
+  (process.env.DATABASE_URL || "").includes("127.0.0.1");
+
 const pool = new pg.Pool({
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASS || "password",
-  host: process.env.DB_HOST || "localhost",
-  port: parseInt(process.env.DB_PORT) || 5432,
-  database: process.env.DB_NAME || "swapkr",
+  connectionString: process.env.DATABASE_URL,
+  ssl: isLocal ? false : { rejectUnauthorized: false },
 });
 
 // ─── Nodemailer Transporter (with SMTP connection pooling) ─────────────
@@ -103,7 +118,8 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // ─── Job Processor ─────────────────────────────────────────────────────
 const processEmailJob = async (job) => {
-  const { title, description, requesterName, requesterId, requestId } = job.data;
+  const { title, description, requesterName, requesterId, requestId } =
+    job.data;
   const jobId = job.id;
   const attempt = job.attemptsMade + 1;
 
@@ -231,7 +247,7 @@ const processEmailJob = async (job) => {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding: 10px 0 15px 0;">
-                    <a href="http://localhost:5173/requests" 
+                    <a href="${process.env.CLIENT_URL}/request/${requestId}" 
                        style="display: inline-block; background: linear-gradient(135deg, #D4940F, #B8860B); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; letter-spacing: 0.3px;">
                       View &amp; Respond
                     </a>
@@ -301,10 +317,16 @@ const processEmailJob = async (job) => {
       });
 
       // Update broadcast_logs with retry error info
-      await pool.query(
-        "UPDATE broadcast_logs SET status = 'retrying', error = $1, emails_sent = $2 WHERE job_id = $3",
-        [`Batch failed at cursor ${lastId}: ${error.message}`, emailsSent, jobId],
-      ).catch(() => { });
+      await pool
+        .query(
+          "UPDATE broadcast_logs SET status = 'retrying', error = $1, emails_sent = $2 WHERE job_id = $3",
+          [
+            `Batch failed at cursor ${lastId}: ${error.message}`,
+            emailsSent,
+            jobId,
+          ],
+        )
+        .catch(() => {});
 
       throw error; // Let BullMQ handle retry with backoff
     }
@@ -322,7 +344,12 @@ const processEmailJob = async (job) => {
     [emailsSent, jobId],
   );
 
-  log.info("Job completed successfully", { jobId, emailsSent, totalRecipients, attempt });
+  log.info("Job completed successfully", {
+    jobId,
+    emailsSent,
+    totalRecipients,
+    attempt,
+  });
 
   return { emailsSent, totalRecipients };
 };
@@ -361,7 +388,9 @@ const startWorker = async () => {
           [err.message, job.id],
         )
         .catch((dbErr) =>
-          log.error("Failed to update broadcast_log on final failure", { error: dbErr.message }),
+          log.error("Failed to update broadcast_log on final failure", {
+            error: dbErr.message,
+          }),
         );
     }
   });
@@ -398,6 +427,9 @@ const startWorker = async () => {
 };
 
 startWorker().catch((err) => {
-  log.error("Failed to start email worker", { error: err.message, stack: err.stack });
+  log.error("Failed to start email worker", {
+    error: err.message,
+    stack: err.stack,
+  });
   process.exit(1);
 });

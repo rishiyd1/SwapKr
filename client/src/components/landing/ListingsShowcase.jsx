@@ -1,61 +1,20 @@
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import ItemCard from "@/components/home/ItemCard";
-
-const listings = [
-  {
-    name: "Casio FX-991EX",
-    price: "₹800",
-    condition: "Good",
-    hostel: "Hostel 7",
-    time: "2h ago",
-    emoji: "🧮",
-  },
-  {
-    name: "Engineering Graphics Kit",
-    price: "₹350",
-    condition: "Like new",
-    hostel: "Hostel 3",
-    time: "5h ago",
-    emoji: "📐",
-  },
-  {
-    name: "Room Heater (Bajaj)",
-    price: "₹600",
-    condition: "Used",
-    hostel: "Mega Boys",
-    time: "1d ago",
-    emoji: "🔥",
-  },
-  {
-    name: "Lab Coat (M)",
-    price: "₹150",
-    condition: "Good",
-    hostel: "Hostel 9",
-    time: "3h ago",
-    emoji: "🥼",
-  },
-  {
-    name: 'Dell Monitor 22"',
-    price: "₹4,500",
-    condition: "Excellent",
-    hostel: "Hostel 2",
-    time: "6h ago",
-    emoji: "🖥️",
-  },
-  {
-    name: "Firefox Cycle",
-    price: "₹2,000",
-    condition: "Fair",
-    hostel: "Mega Girls",
-    time: "12h ago",
-    emoji: "🚲",
-  },
-];
+import GuestItemCard from "@/components/products/GuestItemCard";
+import { useItems } from "@/hooks/useItems";
+import { formatTimeAgo } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const ListingsShowcase = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-50px" });
+
+  const { data: items, isLoading } = useItems({});
+
+  // Show the 6 most recent items
+  const recentItems = (Array.isArray(items) ? items : items?.data || []).slice(0, 6);
 
   return (
     <section className="py-24 px-6 relative overflow-hidden" ref={ref}>
@@ -97,28 +56,68 @@ const ListingsShowcase = () => {
           real stuff, real prices, real close
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 justify-items-center">
-          {listings.map((item, i) => (
-            <motion.div
-              key={item.name}
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.4, delay: i * 0.08 }}
-              className="max-w-[300px] w-full mx-auto"
-            >
-              <ItemCard
-                title={item.name}
-                price={item.price}
-                condition={item.condition}
-                location={item.hostel}
-                time={item.time}
-                image={item.emoji}
-                description="Listed just now"
-                className="h-full bg-card/50 backdrop-blur-sm hover:shadow-[0_0_40px_hsl(165_70%_45%_/_0.15)] hover:border-accent/50 transition-all duration-300"
-              />
-            </motion.div>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-10 h-10 animate-spin text-primary" />
+          </div>
+        ) : recentItems.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 justify-items-center">
+            {recentItems.map((item, i) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+                className="max-w-[240px] w-full mx-auto"
+              >
+                <GuestItemCard
+                  id={item.id}
+                  title={item.title}
+                  price={item.price}
+                  category={item.category}
+                  condition={item.condition}
+                  time={formatTimeAgo(item.createdAt)}
+                  image={
+                    Array.isArray(item.images)
+                      ? item.images.length > 0
+                        ? item.images.map((img) => img.imageUrl)
+                        : ["📦"]
+                      : typeof item.images === "string"
+                        ? JSON.parse(item.images)
+                        : ["📦"]
+                  }
+                  className="h-full bg-card/50 backdrop-blur-sm hover:shadow-[0_0_40px_hsl(165_70%_45%_/_0.15)] hover:border-accent/50 transition-all duration-300"
+                />
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16 bg-card/30 rounded-3xl border border-white/5 border-dashed">
+            <div className="text-5xl mb-4">📦</div>
+            <h3 className="text-lg font-display font-semibold mb-1">No listings yet</h3>
+            <p className="text-muted-foreground text-sm">Be the first to list something!</p>
+          </div>
+        )}
+
+        {/* Browse all link */}
+        {recentItems.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ duration: 0.4, delay: 0.5 }}
+            className="mt-10 text-center"
+          >
+            <Link to="/products">
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-primary/30 text-primary hover:bg-primary/10 font-display px-10 rounded-full"
+              >
+                Browse all listings →
+              </Button>
+            </Link>
+          </motion.div>
+        )}
       </div>
 
       {/* Bottom accent line */}

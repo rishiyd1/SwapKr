@@ -301,7 +301,7 @@ export const resendOtp = async (req, res) => {
     await transporter.sendMail({
       from: process.env.SMTP_USER,
       to: email,
-      subject: "Your CampusXchange Verification Code (Resent)",
+      subject: "Your SwapKr Verification Code (Resent)",
       text: `Hello ${pendingUser.name},
 
 Your one-time verification code (OTP) for CampusXchange is:
@@ -311,7 +311,7 @@ ${otp}
 This code is valid for 5 minutes. Please do not share this code with anyone.
 
 Thank you,
-The CampusXchange Team`,
+The SwapKr Team`,
     });
 
     res.status(200).json({
@@ -352,7 +352,7 @@ export const sendResetOtp = async (req, res) => {
     await transporter.sendMail({
       from: process.env.SMTP_USER,
       to: user.email,
-      subject: "Password Reset OTP - CampusXchange",
+      subject: "Password Reset OTP - SwapKr",
       text: `Hello ${user.name},
 
 Please use the following one-time code (OTP) to reset your password:
@@ -363,7 +363,7 @@ This code is valid for 15 minutes. For security, please do not share this code.
 If you did not request a password reset, you can safely ignore this email.
 
 Thank you,
-Team CampusXchange`,
+Team SwapKr`,
     });
 
     res.json({ success: true, message: "OTP sent successfully" });
@@ -555,5 +555,74 @@ export const getTokenBalance = async (req, res) => {
   } catch (error) {
     console.error("Get Token Balance Error:", error);
     res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// ------------------ DELETE ACCOUNT ------------------
+// DELETE /api/auth/account (protected route)
+export const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { password } = req.body;
+
+    // Import models here, as they are needed before user lookup
+    const { Item, Request, Chat, ItemImage, User } =
+      await import("../models/index.js");
+
+    if (!password) {
+      return res
+        .status(400)
+        .json({ message: "Password is required to delete account" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    // Cascading delete logic
+    // 1. Delete all items listed by user (this will cascade to chats for those items)
+    const items = await Item.findMyListings(userId);
+    for (const item of items) {
+      // Cascading delete for each item
+      await Promise.all([
+        ItemImage.destroyByItemId(item.id),
+        Chat.deleteByItemId(item.id),
+      ]);
+      await Item.destroy(item.id);
+    }
+
+    // 2. Delete all Requests made by user (Requests, Chats)
+    const requests = await Request.findByRequesterId(userId);
+    for (const request of requests) {
+      // Cascading delete for each request
+      await Chat.deleteByRequestId(request.id);
+      await Request.destroy(request.id);
+    }
+
+    // 3. Delete any other chats where user is buyer/seller (Direct chats not linked to items?)
+    // This catches any remaining chats
+    await Chat.deleteByUserId(userId);
+
+    // 4. Delete the User
+    await User.destroy(userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Account and all associated data deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Delete Account Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting account",
+      error: error.message,
+    });
   }
 };

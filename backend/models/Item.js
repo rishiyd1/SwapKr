@@ -7,18 +7,20 @@ const Item = {
     price,
     category,
     pickupLocation,
+    condition,
     sellerId,
     status,
   }) {
     const result = await pool.query(
-      `INSERT INTO items (title, description, price, category, "pickupLocation", "sellerId", status, "createdAt", "updatedAt")
-             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+      `INSERT INTO items (title, description, price, category, condition, "pickupLocation", "sellerId", status, "createdAt", "updatedAt")
+             VALUES ($1, $2, $3::numeric, $4, $5, $6, $7::integer, $8, NOW(), NOW())
              RETURNING *`,
       [
         title,
         description,
         price,
         category || "Others",
+        condition || "Used",
         pickupLocation || null,
         sellerId,
         status || "Available",
@@ -41,7 +43,7 @@ const Item = {
              LEFT JOIN users s ON i."sellerId" = s.id
              LEFT JOIN item_images img ON img."itemId" = i.id
              WHERE i.id = $1
-             GROUP BY i.id, s.id`,
+             GROUP BY i.id, s.id, s.name, s.email, s.hostel, s.department, s."phoneNumber"`,
       [id],
     );
     return result.rows[0] || null;
@@ -80,9 +82,11 @@ const Item = {
     values.push(status);
     paramIndex++;
 
-    // Search by title
+    // Search by title or description
     if (search) {
-      conditions.push(`i.title ILIKE $${paramIndex}`);
+      conditions.push(
+        `(i.title ILIKE $${paramIndex} OR i.description ILIKE $${paramIndex})`,
+      );
       values.push(`%${search}%`);
       paramIndex++;
     }
@@ -113,11 +117,19 @@ const Item = {
       paramIndex++;
     }
 
+    // Exclude seller filter
+    if (where.excludeSellerId) {
+      conditions.push(`i."sellerId" != $${paramIndex}`);
+      values.push(where.excludeSellerId);
+      paramIndex++;
+    }
+
     if (conditions.length > 0) {
       query += " WHERE " + conditions.join(" AND ");
     }
 
-    query += ' GROUP BY i.id, s.id ORDER BY i."createdAt" DESC';
+    query +=
+      ' GROUP BY i.id, s.id, s.name, s.email, s.hostel, s."phoneNumber" ORDER BY i."createdAt" DESC';
 
     const result = await pool.query(query, values);
     return result.rows;

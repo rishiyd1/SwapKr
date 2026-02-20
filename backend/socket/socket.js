@@ -5,7 +5,27 @@ import { Chat, Message } from "../models/index.js";
 export const initSocket = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: (origin, callback) => {
+        const allowedOrigins = [
+          process.env.CLIENT_URL,
+          "http://localhost:8080",
+          "http://127.0.0.1:8080",
+          "http://localhost:5173",
+          "http://127.0.0.1:5173",
+        ].filter(Boolean);
+
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        if (
+          allowedOrigins.indexOf(origin) !== -1 ||
+          origin.endsWith(".vercel.app")
+        ) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -16,9 +36,10 @@ export const initSocket = (server) => {
 
     // Register user
     socket.on("register", (userId) => {
-      socket.userId = userId;
-      onlineUsers.set(userId, socket.id);
-      socket.broadcast.emit("user_online", userId);
+      const uID = parseInt(userId);
+      socket.userId = uID;
+      onlineUsers.set(uID, socket.id);
+      socket.broadcast.emit("user_online", uID);
     });
 
     // Join a chat room (using the actual chatId from the database)
@@ -36,46 +57,61 @@ export const initSocket = (server) => {
 
     // Send message — uses real Message model fields (chatId, senderId, content)
     socket.on("send_message", async ({ chatId, senderId, content }) => {
+      console.log(
+        `[socket] send_message from ${senderId} to chat ${chatId}: "${content}"`,
+      );
       try {
         // Verify the chat exists and the sender is part of it
         const chat = await Chat.findById(chatId);
         if (!chat) {
+          console.log(`[socket] Chat ${chatId} not found`);
           socket.emit("error_message", { message: "Chat not found" });
           return;
         }
 
-        if (chat.buyerId !== senderId && chat.sellerId !== senderId) {
+        if (
+          parseInt(chat.buyerId) !== parseInt(senderId) &&
+          parseInt(chat.sellerId) !== parseInt(senderId)
+        ) {
+          console.log(
+            `[socket] Auth failed for user ${senderId} in chat ${chatId}`,
+          );
           socket.emit("error_message", { message: "Not authorized" });
           return;
         }
 
         // Create the message in the database
         const message = await Message.create({
-          chatId,
+          chatId: parseInt(chatId),
           itemId: chat.itemId,
-          senderId,
+          senderId: parseInt(senderId),
           content,
         });
 
         // Update chat's lastMessageAt
-        await Chat.update(chatId, { lastMessageAt: new Date() });
+        await Chat.update(parseInt(chatId), { lastMessageAt: new Date() });
 
         // Fetch message with sender info
         const fullMessage = await Message.findByIdWithSender(message.id);
 
         // Emit to the chat room
         const room = `chat_${chatId}`;
+        console.log(`[socket] Broadcasting to room ${room}`);
         io.to(room).emit("receive_message", fullMessage);
 
-        // Also notify the receiver if they are online but not in the room
-        const receiverId =
-          chat.buyerId === senderId ? chat.sellerId : chat.buyerId;
-        const receiverSocketId = onlineUsers.get(receiverId);
-        if (receiverSocketId) {
-          io.to(receiverSocketId).emit("new_message_notification", {
-            chatId,
-            message: fullMessage,
-          });
+        // Also notify the recipient globally if they're not in the room
+        const recipientId =
+          parseInt(chat.buyerId) === parseInt(senderId)
+            ? chat.sellerId
+            : chat.buyerId;
+
+        const recipientID = parseInt(recipientId);
+        const recipientSocketId =
+          onlineUsers.get(recipientID.toString()) ||
+          onlineUsers.get(recipientID);
+        if (recipientSocketId) {
+          console.log(`[socket] Notifying recipient ${recipientID} globally`);
+          io.to(recipientSocketId).emit("receive_message", fullMessage);
         }
       } catch (error) {
         console.error("Socket send_message error:", error);

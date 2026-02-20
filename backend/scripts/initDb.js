@@ -3,15 +3,29 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const dbName = process.env.DB_NAME || "swapkr";
-const config = {
-  user: process.env.DB_USER || "postgres",
-  password: process.env.DB_PASS || "password",
-  host: process.env.DB_HOST || "localhost",
-  port: parseInt(process.env.DB_PORT) || 5432,
-  database: "postgres", // Connect to default DB to create new one
+
+const getClientConfig = (initialDb = null) => {
+  if (process.env.DATABASE_URL) {
+    return {
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    };
+  }
+  return {
+    user: process.env.DB_USER || "postgres",
+    password: process.env.DB_PASS || "password",
+    host: process.env.DB_HOST || "localhost",
+    port: parseInt(process.env.DB_PORT) || 5432,
+    database: initialDb || "postgres",
+  };
 };
 
 const createDb = async () => {
+  if (process.env.DATABASE_URL) {
+    console.log("Using DATABASE_URL, skipping database creation check.");
+    return;
+  }
+  const config = getClientConfig("postgres");
   const client = new pg.Client(config);
   try {
     await client.connect();
@@ -51,11 +65,11 @@ const createDb = async () => {
 };
 
 const createTables = async () => {
-  const appConfig = { ...config, database: dbName };
-  const client = new pg.Client(appConfig);
+  const config = getClientConfig(dbName);
+  const client = new pg.Client(config);
   try {
     await client.connect();
-    console.log(`Connected to ${dbName}. Creating tables...`);
+    console.log(`Connected to database. Creating tables...`);
 
     // Create ENUM types (safe: IF NOT EXISTS via DO block)
     await client.query(`
@@ -120,6 +134,7 @@ const createTables = async () => {
                 description TEXT NOT NULL,
                 price DECIMAL(10, 2) NOT NULL,
                 category item_category DEFAULT 'Others',
+                condition VARCHAR(50) DEFAULT 'Used',
                 "pickupLocation" VARCHAR(255),
                 status item_status DEFAULT 'Available',
                 "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -179,6 +194,47 @@ const createTables = async () => {
                 "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
+        `);
+
+    // Buy Requests table
+    await client.query(`
+            CREATE TABLE IF NOT EXISTS buy_requests (
+                id SERIAL PRIMARY KEY,
+                "buyerId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                "sellerId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                "itemId" INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+                message TEXT NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Accepted', 'Rejected')),
+                "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+            );
+        `);
+
+    // Indices for Buy Requests
+    await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_buy_requests_seller ON buy_requests("sellerId");
+            CREATE INDEX IF NOT EXISTS idx_buy_requests_buyer ON buy_requests("buyerId");
+            CREATE INDEX IF NOT EXISTS idx_buy_requests_buyer_item ON buy_requests("buyerId", "itemId");
+        `);
+
+    // Notifications table
+    await client.query(`
+            CREATE TABLE IF NOT EXISTS notifications (
+                id SERIAL PRIMARY KEY,
+                "userId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                type VARCHAR(50) NOT NULL,
+                content TEXT NOT NULL,
+                "relatedId" INTEGER,
+                "isRead" BOOLEAN DEFAULT false,
+                "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+            );
+        `);
+
+    // Indices for Notifications
+    await client.query(`
+            CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications("userId");
+            CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications("userId") WHERE "isRead" = false;
         `);
 
     console.log("All tables created successfully.");
