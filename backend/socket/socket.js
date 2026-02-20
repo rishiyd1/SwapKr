@@ -5,7 +5,27 @@ import { Chat, Message } from "../models/index.js";
 export const initSocket = (server) => {
   const io = new Server(server, {
     cors: {
-      origin: ["http://localhost:8080", "http://127.0.0.1:8080"],
+      origin: (origin, callback) => {
+        const allowedOrigins = [
+          process.env.CLIENT_URL,
+          "http://localhost:8080",
+          "http://127.0.0.1:8080",
+          "http://localhost:5173",
+          "http://127.0.0.1:5173",
+        ].filter(Boolean);
+
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        if (
+          allowedOrigins.indexOf(origin) !== -1 ||
+          origin.endsWith(".vercel.app")
+        ) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
       methods: ["GET", "POST"],
       credentials: true,
     },

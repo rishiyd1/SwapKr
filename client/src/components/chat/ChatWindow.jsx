@@ -122,7 +122,12 @@ const ChatWindow = ({
     try {
       await ordersService.rejectRequest(request.id);
       toast.success("Request rejected");
-      onChatStarted();
+      if (onBack) {
+        onBack();
+      } else {
+        // Fallback if no onBack provided (e.g. direct URL access)
+        window.location.href = "/chats";
+      }
     } catch (error) {
       toast.error("Failed to reject request");
     }
@@ -194,7 +199,7 @@ const ChatWindow = ({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          className="h-8 w-8 text-muted-foreground hover:text-foreground md:hidden"
           onClick={onBack}
         >
           <ChevronLeft className="w-4 h-4" />

@@ -36,12 +36,15 @@ export const sendBuyRequest = async (req, res) => {
         .json({ message: "This item is no longer available" });
     }
 
-    // Check for duplicate pending request
+    // Check for ANY existing request (Pending, Accepted, or Rejected)
     const existingRequest = await BuyRequest.findOne({ buyerId, itemId });
     if (existingRequest) {
-      return res
-        .status(400)
-        .json({ message: "You already have a pending request for this item" });
+      const statusMsg =
+        existingRequest.status === "Rejected"
+          ? "Your previous request for this item was rejected."
+          : "You already have a request for this item.";
+
+      return res.status(400).json({ message: statusMsg });
     }
 
     // Create the buy request
@@ -236,12 +239,13 @@ export const rejectRequest = async (req, res) => {
     await Notification.create({
       userId: buyRequest.buyerId,
       type: "buy_request_rejected",
+      // Link to item (preserved)
       content: `Your request for "${buyRequest.item?.title || "an item"}" was rejected.`,
-      relatedId: buyRequest.itemId, // Link to item instead of deleted request
+      relatedId: buyRequest.itemId,
     });
 
-    // Delete the request as requested
-    await BuyRequest.delete(requestId);
+    // Update status to Rejected (Soft Delete from Seller view)
+    await BuyRequest.update(requestId, { status: "Rejected" });
 
     // Notify buyer via socket
     const io = req.app.get("io");

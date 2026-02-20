@@ -3,17 +3,15 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import NavbarHome from "@/components/home/NavbarHome";
 import ItemCard from "@/components/home/ItemCard";
 import { Button } from "@/components/ui/button";
-import { Filter, Package, HelpCircle, Loader2, Zap, Clock } from "lucide-react";
+import { Filter, Package, Loader2, Zap, Clock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
-import { itemsService } from "@/services/items.service";
-import { requestsService } from "@/services/requests.service";
+import { useItems } from "@/hooks/useItems";
+import { useRequests } from "@/hooks/useRequests";
 import Footer from "@/components/landing/Footer";
 import { formatTimeAgo } from "@/lib/utils";
-import CreateRequestDialog from "@/components/requests/CreateRequestDialog";
 
 const CATEGORIES = [
-  { id: "Equipments", label: "Hardware", icon: "⚙️" },
+  { id: "Hardware", label: "Hardware", icon: "⚙️" },
   { id: "Daily Use", label: "Daily Use", icon: "🧴" },
   { id: "Academics", label: "Academics", icon: "📚" },
   { id: "Sports", label: "Sports", icon: "⚽" },
@@ -37,50 +35,108 @@ const Home = () => {
     }
   }, [urlTab]);
 
-  const { data: items, isLoading: isLoadingItems } = useQuery({
-    queryKey: ["items", selectedCategory],
-    queryFn: () => itemsService.getItems({ category: selectedCategory }),
-    enabled: activeTab === "listings",
-  });
+  /* 
+    REFACTOR: Replaced manual useQuery with custom hooks
+    - useItems encapsulates item fetching logic
+    - useRequests encapsulates request fetching logic
+  */
 
-  const { data: requests, isLoading: isLoadingRequests } = useQuery({
-    queryKey: ["requests"],
-    queryFn: requestsService.getRequests,
-    enabled: activeTab === "requests",
-  });
+  // Get search query from URL
+  const searchQuery = searchParams.get("search") || "";
+
+  const handleSearchChange = (query) => {
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      if (query) {
+        newParams.set("search", query);
+      } else {
+        newParams.delete("search");
+      }
+      return newParams;
+    });
+  };
+
+  const { data: items, isLoading: isLoadingItems } = useItems(
+    { category: selectedCategory, search: searchQuery },
+    activeTab === "listings",
+  );
+
+  const { data: requests, isLoading: isLoadingRequests } = useRequests(
+    { category: selectedCategory },
+    activeTab === "requests",
+  );
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setSearchParams({ tab });
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev);
+      newParams.set("tab", tab);
+      return newParams;
+    });
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col font-body">
       <NavbarHome />
 
-      <main className="flex-1 container px-4 py-8 md:px-6 mx-auto max-w-7xl">
-        {/* Tabs Header */}
-        <div className="flex items-center justify-center mb-10 gap-4">
-          <button
-            onClick={() => handleTabChange("listings")}
-            className={`px-8 py-3 rounded-full text-lg font-display font-medium transition-all duration-300 ${
-              activeTab === "listings"
-                ? "bg-primary text-primary-foreground shadow-[0_0_20px_hsl(42_100%_62%_/_0.3)] scale-105"
-                : "bg-secondary/30 text-muted-foreground hover:bg-secondary/50"
-            }`}
-          >
-            Item Listings
-          </button>
-          <button
-            onClick={() => handleTabChange("requests")}
-            className={`px-8 py-3 rounded-full text-lg font-display font-medium transition-all duration-300 ${
-              activeTab === "requests"
-                ? "bg-primary text-primary-foreground shadow-[0_0_20px_hsl(42_100%_62%_/_0.3)] scale-105"
-                : "bg-secondary/30 text-muted-foreground hover:bg-secondary/50"
-            }`}
-          >
-            Item Requests
-          </button>
+      <main className="flex-1 container px-4 pt-4 pb-8 md:px-6 mx-auto max-w-7xl">
+        {/* Categories - Connected Segmented Style */}
+        <div className="mb-6 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
+          <div className="flex justify-start md:justify-center min-w-max">
+            <div className="flex items-center p-1 bg-secondary/30 rounded-full border border-white/5">
+              <button
+                onClick={() => setSelectedCategory("All")}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                  selectedCategory === "All"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                }`}
+              >
+                <Package className="w-4 h-4" />
+                All
+              </button>
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
+                    selectedCategory === cat.id
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  }`}
+                >
+                  <span>{cat.icon}</span>
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs Header - Compact Segmented Control */}
+        <div className="flex items-center justify-center mb-8">
+          <div className="flex p-1 bg-secondary/30 rounded-full border border-white/5 relative">
+            <button
+              onClick={() => handleTabChange("listings")}
+              className={`px-8 py-2.5 rounded-full text-sm font-display font-medium transition-all duration-300 relative z-10 ${
+                activeTab === "listings"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+              }`}
+            >
+              Item Listings
+            </button>
+            <button
+              onClick={() => handleTabChange("requests")}
+              className={`px-8 py-2.5 rounded-full text-sm font-display font-medium transition-all duration-300 relative z-10 ${
+                activeTab === "requests"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+              }`}
+            >
+              Item Requests
+            </button>
+          </div>
         </div>
 
         <AnimatePresence mode="wait">
@@ -92,40 +148,6 @@ const Home = () => {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
             >
-              {/* Category Buttons */}
-              <div className="mb-12">
-                <h2 className="text-2xl font-display font-bold mb-6 text-foreground flex items-center gap-2">
-                  <Filter className="w-6 h-6 text-primary" /> Browse Categories
-                </h2>
-                <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                  <button
-                    onClick={() => setSelectedCategory("All")}
-                    className={`h-24 px-8 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 min-w-[120px] ${
-                      selectedCategory === "All"
-                        ? "bg-primary/10 border-primary text-primary"
-                        : "bg-card border-white/5 text-muted-foreground hover:border-primary/50 hover:bg-card/80"
-                    }`}
-                  >
-                    <Package className="w-8 h-8" />
-                    <span className="font-semibold">All Items</span>
-                  </button>
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={`h-24 px-8 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 min-w-[120px] ${
-                        selectedCategory === cat.id
-                          ? "bg-primary/10 border-primary text-primary"
-                          : "bg-card border-white/5 text-muted-foreground hover:border-primary/50 hover:bg-card/80"
-                      }`}
-                    >
-                      <span className="text-2xl">{cat.icon}</span>
-                      <span className="font-semibold">{cat.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Listings Grid */}
               <div>
                 <h2 className="text-xl font-display font-semibold mb-6 flex items-center gap-2 text-muted-foreground">
@@ -188,7 +210,7 @@ const Home = () => {
               transition={{ duration: 0.3 }}
               className="space-y-8"
             >
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card/30 p-8 rounded-3xl border border-white/5 shadow-xl">
+              <div className="flex justify-between items-end">
                 <div>
                   <h2 className="text-3xl font-display font-bold mb-2">
                     Item Requests
@@ -198,13 +220,12 @@ const Home = () => {
                     to find items you need on campus.
                   </p>
                 </div>
-                <CreateRequestDialog
-                  trigger={
-                    <Button className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-6 text-lg rounded-full font-display h-auto">
-                      <HelpCircle className="w-5 h-5 mr-2" /> Make a Request
-                    </Button>
-                  }
-                />
+                <div className="hidden md:block text-sm text-muted-foreground">
+                  Showing:{" "}
+                  <span className="text-foreground font-medium">
+                    {selectedCategory}
+                  </span>
+                </div>
               </div>
 
               {isLoadingRequests ? (
@@ -232,7 +253,11 @@ const Home = () => {
 
                       <div className="flex gap-4 flex-1 items-center">
                         <div
-                          className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner shrink-0 ${request.type === "Urgent" ? "bg-red-500/10" : "bg-primary/10"}`}
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-inner shrink-0 ${
+                            request.type === "Urgent"
+                              ? "bg-red-500/10"
+                              : "bg-primary/10"
+                          }`}
                         >
                           {request.type === "Urgent" ? "🔥" : "✨"}
                         </div>
@@ -240,7 +265,11 @@ const Home = () => {
                           <h3 className="text-lg font-display font-bold group-hover:text-primary transition-colors pr-10 truncate">
                             {request.title}
                           </h3>
-                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mt-1">
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
+                            <span className="font-medium text-accent">
+                              {request.category || "Others"}
+                            </span>
+                            <span>•</span>
                             <Clock className="w-3 h-3" />
                             {formatTimeAgo(request.createdAt)}
                           </div>
@@ -256,7 +285,9 @@ const Home = () => {
                     No requests found
                   </h3>
                   <p className="text-muted-foreground">
-                    Be the first one to make a request!
+                    No requests under{" "}
+                    <span className="text-primary">{selectedCategory}</span>{" "}
+                    yet.
                   </p>
                 </div>
               )}

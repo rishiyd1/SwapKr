@@ -250,9 +250,14 @@ const Chats = () => {
   return (
     <div className="h-screen bg-background flex flex-col font-body overflow-hidden">
       <NavbarHome />
-      <main className="flex-1 container px-4 py-4 md:px-6 mx-auto max-w-7xl overflow-hidden flex gap-4">
+      <main className="flex-1 container px-4 py-4 md:px-6 mx-auto max-w-7xl overflow-hidden flex gap-4 relative">
         {/* Sidebar */}
-        <div className="w-80 flex-shrink-0 bg-card/40 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm flex flex-col">
+        <div
+          className={`
+            md:w-80 w-full flex-shrink-0 bg-card/40 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm flex-col
+            ${selectedChat || selectedRequest ? "hidden md:flex" : "flex"}
+          `}
+        >
           <ChatSidebar
             chats={chats}
             requests={incomingRequests}
@@ -264,7 +269,12 @@ const Chats = () => {
         </div>
 
         {/* Chat Window */}
-        <div className="flex-1 bg-card/40 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm flex flex-col relative">
+        <div
+          className={`
+            flex-1 bg-card/40 border border-white/5 rounded-2xl overflow-hidden backdrop-blur-sm flex-col relative
+            ${selectedChat || selectedRequest ? "flex" : "hidden md:flex"}
+          `}
+        >
           <ChatWindow
             chat={selectedChat}
             request={selectedRequest}
