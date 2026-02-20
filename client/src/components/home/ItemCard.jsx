@@ -53,7 +53,7 @@ const ItemCard = ({
 
   const handleCardClick = () => {
     if (id) {
-      window.open(`/item/${id}`, "_blank");
+      window.open(`/item/${id}`);
     }
   };
 

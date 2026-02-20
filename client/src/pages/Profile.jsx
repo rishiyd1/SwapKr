@@ -19,12 +19,17 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
-import { itemsService } from "@/services/items.service";
-import { requestsService } from "@/services/requests.service";
+import { useItems, useMyListings } from "@/hooks/useItems";
+import { useRequests, useMyRequests } from "@/hooks/useRequests";
+import {
+  useProfile,
+  useUpdateProfile,
+  useDeleteAccount,
+} from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { authService } from "@/services/auth.service";
+import { authService } from "@/services/auth.service"; // Keep for types or utils if needed, but mostly served by hooks
 import NavbarHome from "@/components/home/NavbarHome";
 import Footer from "@/components/landing/Footer";
 import { Link, useNavigate } from "react-router-dom";
@@ -74,18 +79,26 @@ const ProfileField = ({
 
 const Profile = () => {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  /* 
+    REFACTOR: Replaced manual state and effects with React Query hooks
+    - useProfile handles fetching user data
+    - useMyListings handles fetching user's items
+    - useMyRequests handles fetching user's requests
+    - useUpdateProfile handles profile updates
+    - useDeleteAccount handles account deletion
+  */
+  const { data: profile, isLoading: isLoadingProfile } = useProfile();
+  const { data: myListings, isLoading: isLoadingListings } = useMyListings();
+  const { data: myRequests, isLoading: isLoadingRequests } = useMyRequests();
+
+  const updateProfileMutation = useUpdateProfile();
+  const deleteAccountMutation = useDeleteAccount();
+
   const [activeTab, setActiveTab] = useState("info");
-  const [myListings, setMyListings] = useState([]);
-  const [myRequests, setMyRequests] = useState([]);
-  const [isLoadingListings, setIsLoadingListings] = useState(false);
-  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
-  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -95,110 +108,52 @@ const Profile = () => {
     hostel: "",
   });
 
+  // Sync formData when profile is loaded
   useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === "listings") {
-      fetchMyListings();
-    } else if (activeTab === "requests") {
-      fetchMyRequests();
+    if (profile) {
+      setFormData({
+        name: profile.name || "",
+        email: profile.email || "",
+        phoneNumber: profile.phoneNumber || "",
+        department: profile.department || "",
+        year: profile.year || "",
+        hostel: profile.hostel || "",
+      });
     }
-  }, [activeTab]);
-
-  const fetchProfile = async () => {
-    setIsLoading(true);
-    try {
-      const response = await authService.getProfile();
-      if (response && response.user) {
-        setProfile(response.user);
-        setFormData({
-          name: response.user.name || "",
-          email: response.user.email || "",
-          phoneNumber: response.user.phoneNumber || "",
-          department: response.user.department || "",
-          year: response.user.year || "",
-          hostel: response.user.hostel || "",
-        });
-      }
-    } catch (error) {
-      toast.error(error.message || "Failed to fetch profile");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchMyListings = async () => {
-    setIsLoadingListings(true);
-    try {
-      const items = await itemsService.getMyListings();
-      setMyListings(items || []);
-    } catch (error) {
-      toast.error("Failed to fetch your listings");
-    } finally {
-      setIsLoadingListings(false);
-    }
-  };
-
-  const fetchMyRequests = async () => {
-    setIsLoadingRequests(true);
-    try {
-      const requests = await requestsService.getMyRequests();
-      setMyRequests(requests || []);
-    } catch (error) {
-      toast.error("Failed to fetch your requests");
-    } finally {
-      setIsLoadingRequests(false);
-    }
-  };
+  }, [profile]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      // Don't send email as it cannot be changed usually, or backend handles it strictly
-      const updateData = {
+  const handleSave = () => {
+    updateProfileMutation.mutate(
+      {
         name: formData.name,
+        // email is usually not updatable or handled separately
         phoneNumber: formData.phoneNumber,
         department: formData.department,
         year: formData.year,
         hostel: formData.hostel,
-      };
-
-      const response = await authService.updateProfile(updateData);
-      setProfile(response.user);
-      setIsEditing(false);
-      toast.success("Profile updated successfully!");
-    } catch (error) {
-      toast.error(error.message || "Failed to update profile");
-    } finally {
-      setIsSaving(false);
-    }
+      },
+      {
+        onSuccess: () => {
+          setIsEditing(false);
+        },
+      },
+    );
   };
 
-  const handleDeleteAccount = async () => {
+  const handleDeleteAccount = () => {
     if (!deletePassword) {
       toast.error("Please enter your password to confirm");
       return;
     }
-
-    setIsDeletingAccount(true);
-    try {
-      await authService.deleteAccount(deletePassword);
-      toast.success("Account deleted successfully. We will miss you!");
-      navigate("/landing");
-    } catch (error) {
-      toast.error(error.message || "Failed to delete account");
-      setIsDeletingAccount(false);
-    }
+    deleteAccountMutation.mutate(deletePassword);
   };
 
-  if (isLoading) {
+  if (isLoadingProfile) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
@@ -345,10 +300,10 @@ const Profile = () => {
                           <Button
                             size="sm"
                             onClick={handleSave}
-                            disabled={isSaving}
+                            disabled={updateProfileMutation.isPending}
                             className="bg-primary hover:bg-primary/90 text-primary-foreground"
                           >
-                            {isSaving ? (
+                            {updateProfileMutation.isPending ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                               <>
@@ -474,9 +429,11 @@ const Profile = () => {
                             e.preventDefault();
                             handleDeleteAccount();
                           }}
-                          disabled={isDeletingAccount || !deletePassword}
+                          disabled={
+                            deleteAccountMutation.isPending || !deletePassword
+                          }
                         >
-                          {isDeletingAccount ? (
+                          {deleteAccountMutation.isPending ? (
                             <>
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                               Deleting...
@@ -506,7 +463,7 @@ const Profile = () => {
                       <div className="flex justify-center items-center h-48">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                       </div>
-                    ) : myListings.length > 0 ? (
+                    ) : myListings?.length > 0 ? (
                       <div className="grid grid-cols-1 gap-4">
                         {myListings.map((item) => (
                           <div
@@ -591,7 +548,7 @@ const Profile = () => {
                       <div className="flex justify-center items-center h-48">
                         <Loader2 className="w-8 h-8 animate-spin text-primary" />
                       </div>
-                    ) : myRequests.length > 0 ? (
+                    ) : myRequests?.length > 0 ? (
                       <div className="grid grid-cols-1 gap-4">
                         {myRequests.map((request) => (
                           <Link

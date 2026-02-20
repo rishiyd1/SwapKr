@@ -43,7 +43,7 @@ export const createRequest = async (req, res) => {
   const client = await pool.connect(); // Grab a client for transaction
 
   try {
-    const { title, description, type } = req.body;
+    const { title, description, type, category } = req.body;
     const requesterId = req.user.id;
 
     // Validate input
@@ -98,10 +98,17 @@ export const createRequest = async (req, res) => {
 
     // Create the request within the same transaction
     const requestResult = await client.query(
-      `INSERT INTO requests (title, description, type, "tokenCost", "requesterId", status, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, 'Open', NOW(), NOW())
+      `INSERT INTO requests (title, description, type, "tokenCost", "requesterId", status, category, "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, 'Open', $6, NOW(), NOW())
        RETURNING *`,
-      [safeTitle, safeDescription, type || "Normal", tokenCost, requesterId],
+      [
+        safeTitle,
+        safeDescription,
+        type || "Normal",
+        tokenCost,
+        requesterId,
+        category || "Others",
+      ],
     );
     const newRequest = requestResult.rows[0];
 
@@ -126,13 +133,21 @@ export const createRequest = async (req, res) => {
 
     // 2. Enqueue Email Job for URGENT requests
     if (type === "Urgent") {
-      await addEmailJob({
-        title: safeTitle,
-        description: safeDescription,
-        requesterName: sanitize(user.name),
-        requesterId,
-        requestId: newRequest.id,
-      });
+      try {
+        await addEmailJob({
+          title: safeTitle,
+          description: safeDescription,
+          requesterName: sanitize(user.name),
+          requesterId,
+          requestId: newRequest.id,
+        });
+      } catch (emailError) {
+        console.error(
+          "[createRequest] Failed to queue email job (Redis unavailable?):",
+          emailError.message,
+        );
+        // Do NOT rollback or fail the request; just log the error
+      }
     }
 
     // Fetch updated token count
@@ -159,7 +174,8 @@ export const createRequest = async (req, res) => {
 export const getRequests = async (req, res) => {
   try {
     const currentUserId = req.user ? req.user.id : null;
-    const requests = await Request.findAllOpen(currentUserId);
+    const { category } = req.query;
+    const requests = await Request.findAllOpen(currentUserId, category);
 
     res.status(200).json(requests);
   } catch (error) {

@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 import { authService } from "@/services/auth.service";
 import { SocketContext } from "./SocketContext";
 
-const SOCKET_URL = window.location.origin;
+const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);

@@ -15,7 +15,7 @@ import {
   Trash2,
   MapPin,
 } from "lucide-react";
-import { requestsService } from "@/services/requests.service";
+import { useRequest, useDeleteRequest } from "@/hooks/useRequests";
 import { chatsService } from "@/services/chats.service";
 import { authService } from "@/services/auth.service";
 import { Button } from "@/components/ui/button";
@@ -40,18 +40,11 @@ const RequestDetail = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const currentUser = authService.getCurrentUser();
+  const deleteRequestMutation = useDeleteRequest();
 
-  const {
-    data: request,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["request", id],
-    queryFn: () => requestsService.getRequestById(id),
-  });
+  const { data: request, isLoading, error } = useRequest(id);
 
   const { data: myConversations } = useQuery({
     queryKey: ["chats"],
@@ -70,17 +63,8 @@ const RequestDetail = () => {
     queryClient.invalidateQueries(["request", id]);
   };
 
-  const handleDeleteRequest = async () => {
-    setIsDeleting(true);
-    try {
-      await requestsService.deleteRequest(id);
-      toast.success("Request deleted successfully");
-      navigate("/home?tab=requests");
-    } catch (error) {
-      toast.error(error.message || "Failed to delete request");
-      setIsDeleting(false);
-      setIsDeleteDialogOpen(false);
-    }
+  const handleDeleteRequest = () => {
+    deleteRequestMutation.mutate(id);
   };
 
   if (isLoading) {
@@ -174,6 +158,11 @@ const RequestDetail = () => {
                     className={`w-4 h-4 ${request.type === "Urgent" ? "text-red-500" : "text-primary"}`}
                   />
                   <span className="text-sm font-medium">{request.status}</span>
+                </div>
+                <div className="flex items-center gap-2.5 bg-secondary/30 px-4 py-2 rounded-xl border border-white/5">
+                  <span className="text-sm font-medium">
+                    {request.category || "Others"}
+                  </span>
                 </div>
                 {request.tokenCost > 0 && (
                   <div className="flex items-center gap-2.5 bg-accent/10 px-4 py-2 rounded-xl border border-accent/20">
@@ -331,9 +320,9 @@ const RequestDetail = () => {
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleDeleteRequest}
-              disabled={isDeleting}
+              disabled={deleteRequestMutation.isPending}
             >
-              {isDeleting ? (
+              {deleteRequestMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Deleting...

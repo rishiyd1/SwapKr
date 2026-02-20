@@ -21,7 +21,7 @@ import { PlusCircle, Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { itemsService } from "@/services/items.service";
 
-const CATEGORIES = ["Equipments", "Daily Use", "Academics", "Sports", "Others"];
+const CATEGORIES = ["Hardware", "Daily Use", "Academics", "Sports", "Others"];
 
 const CreateItemDialog = ({ trigger }) => {
   const [open, setOpen] = useState(false);

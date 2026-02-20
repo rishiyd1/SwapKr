@@ -9,10 +9,11 @@ const Request = {
     requesterId,
     status,
     budget,
+    category,
   }) {
     const result = await pool.query(
-      `INSERT INTO requests (title, description, type, "tokenCost", "requesterId", status, budget, "createdAt", "updatedAt")
-             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+      `INSERT INTO requests (title, description, type, "tokenCost", "requesterId", status, budget, category, "createdAt", "updatedAt")
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
              RETURNING *`,
       [
         title,
@@ -22,12 +23,13 @@ const Request = {
         requesterId,
         status || "Open",
         budget || null,
+        category || "Others",
       ],
     );
     return result.rows[0];
   },
 
-  async findAllOpen(excludeRequesterId = null) {
+  async findAllOpen(excludeRequesterId = null, category = null) {
     let query = `SELECT r.*,
                   json_build_object('id', u.id, 'name', u.name, 'email', u.email) AS requester
            FROM requests r
@@ -37,8 +39,13 @@ const Request = {
     const params = [];
 
     if (excludeRequesterId) {
-      query += ` AND r."requesterId" != $1`;
       params.push(excludeRequesterId);
+      query += ` AND r."requesterId" != $${params.length}`;
+    }
+
+    if (category && category !== "All") {
+      params.push(category);
+      query += ` AND r."category" = $${params.length}`;
     }
 
     query += ` ORDER BY r."createdAt" DESC`;

@@ -12,8 +12,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { PlusCircle, Loader2, Zap } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { requestsService } from "@/services/requests.service";
+
+const CATEGORIES = ["Hardware", "Daily Use", "Academics", "Sports", "Others"];
 
 const CreateRequestDialog = ({ trigger }) => {
   const [open, setOpen] = useState(false);
@@ -22,6 +31,7 @@ const CreateRequestDialog = ({ trigger }) => {
     title: "",
     description: "",
     budget: "",
+    category: "",
     isUrgent: false,
   });
 
@@ -30,14 +40,18 @@ const CreateRequestDialog = ({ trigger }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleCategoryChange = (value) => {
+    setFormData((prev) => ({ ...prev, category: value }));
+  };
+
   const handleToggleUrgent = (checked) => {
     setFormData((prev) => ({ ...prev, isUrgent: checked }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title) {
-      toast.error("Title is required");
+    if (!formData.title || !formData.category) {
+      toast.error("Title and Category are required");
       return;
     }
 
@@ -46,8 +60,8 @@ const CreateRequestDialog = ({ trigger }) => {
       const submitData = {
         title: formData.title,
         description: formData.description,
-        budget: formData.budget,
         budget: formData.budget ? parseFloat(formData.budget) : null,
+        category: formData.category,
         type: formData.isUrgent ? "Urgent" : "Normal",
       };
       await requestsService.createRequest(submitData);
@@ -57,7 +71,13 @@ const CreateRequestDialog = ({ trigger }) => {
           : "Request created successfully!",
       );
       setOpen(false);
-      setFormData({ title: "", description: "", budget: "", isUrgent: false });
+      setFormData({
+        title: "",
+        description: "",
+        budget: "",
+        category: "",
+        isUrgent: false,
+      });
     } catch (error) {
       toast.error(error.message || "Failed to create request");
     } finally {
@@ -96,6 +116,28 @@ const CreateRequestDialog = ({ trigger }) => {
               className="bg-secondary/50 border-white/10"
             />
           </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium leading-none">
+              Category <span className="text-red-500">*</span>
+            </label>
+            <Select
+              onValueChange={handleCategoryChange}
+              value={formData.category}
+            >
+              <SelectTrigger className="bg-secondary/50 border-white/10">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Description
