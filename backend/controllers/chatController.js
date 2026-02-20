@@ -1,20 +1,60 @@
-import { Chat, Message, User, Item } from "../models/index.js";
+import { Chat, Message, User, Item, Request } from "../models/index.js";
+import pool from "../config/database.js";
 
 // POST /api/chat/start - Start a conversation about an item
+// POST /api/chat/start - Start a conversation about an item or request
 export const startConversation = async (req, res) => {
   try {
-    const { itemId, sellerId } = req.body;
-    const buyerId = req.user.id;
+    const { itemId, sellerId, requestId } = req.body;
+    const currentUserId = req.user.id;
+
+    let targetBuyerId, targetSellerId, targetItemId;
+
+    if (requestId) {
+      // Flow: Seller responding to a General Item Request ("I can provide this")
+      // In this case, the Current User is the SELLER, and the Requester is the BUYER.
+      const request = await Request.findByIdWithDetails(requestId);
+
+      if (!request) {
+        return res.status(404).json({ message: "Request not found" });
+      }
+
+      targetBuyerId = request.requesterId;
+      targetSellerId = currentUserId;
+      targetItemId = null; // No specific item listing yet
+    } else {
+      // Flow: Buyer interested in an Item Listing
+      // Current User is BUYER, Listing Owner is SELLER
+      targetBuyerId = currentUserId;
+      targetSellerId = sellerId;
+      targetItemId = itemId;
+    }
+
+    if (!targetBuyerId || !targetSellerId || (!targetItemId && !requestId)) {
+      return res.status(400).json({ message: "Missing required chat details" });
+    }
 
     // Can't chat with yourself
-    if (buyerId === sellerId) {
+    if (targetBuyerId === targetSellerId) {
       return res
         .status(400)
         .json({ message: "Cannot start chat with yourself" });
     }
 
     // Check if chat already exists
-    let chat = await Chat.findOne({ buyerId, sellerId, itemId });
+    // Check if chat already exists
+    let query = {
+      buyerId: targetBuyerId,
+      sellerId: targetSellerId,
+    };
+
+    if (requestId) {
+      query.requestId = requestId;
+    } else {
+      query.itemId = targetItemId;
+    }
+
+    let chat = await Chat.findOne(query);
 
     if (chat) {
       return res.status(200).json({
@@ -26,9 +66,10 @@ export const startConversation = async (req, res) => {
 
     // Create new chat
     chat = await Chat.create({
-      buyerId,
-      sellerId,
-      itemId,
+      buyerId: targetBuyerId,
+      sellerId: targetSellerId,
+      itemId: targetItemId, // Will be null if requestId is present
+      requestId: requestId || null,
       lastMessageAt: new Date(),
     });
 
@@ -53,7 +94,6 @@ export const getMyConversations = async (req, res) => {
   try {
     const userId = req.user.id;
     const chats = await Chat.findAllForUser(userId);
-
     res.status(200).json(chats);
   } catch (error) {
     console.error("Get Chats Error:", error);
@@ -160,5 +200,42 @@ export const getConversation = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error fetching chat", error: error.message });
+  }
+};
+
+// GET /api/chats/unread-summary - Get counts for navbar badge
+export const getUnreadSummary = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // 1. Count unread messages
+    const messageResult = await pool.query(
+      `SELECT COUNT(*)::integer FROM messages 
+       WHERE "senderId" != $1::integer AND "isRead" = false
+       AND "chatId" IN (SELECT id FROM chats WHERE "buyerId" = $1::integer OR "sellerId" = $1::integer)`,
+      [userId],
+    );
+
+    // 2. Count pending buy requests (for me as seller)
+    const requestResult = await pool.query(
+      `SELECT COUNT(*)::integer FROM buy_requests 
+       WHERE "sellerId" = $1::integer AND status = 'Pending'`,
+      [userId],
+    );
+
+    const unreadMessages = messageResult.rows[0].count;
+    const pendingRequests = requestResult.rows[0].count;
+    const totalUnread = unreadMessages + pendingRequests;
+
+    res.status(200).json({
+      totalUnread,
+      unreadMessages,
+      pendingRequests,
+    });
+  } catch (error) {
+    console.error("Get Unread Summary Error:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching unread summary", error: error.message });
   }
 };

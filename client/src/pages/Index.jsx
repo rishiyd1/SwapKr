@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ExclusivityBar from "@/components/landing/ExclusivityBar";
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
@@ -10,16 +10,28 @@ import ListingsShowcase from "@/components/landing/ListingsShowcase";
 import FoundersSection from "@/components/landing/FoundersSection";
 import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
-import LoginModal from "@/components/landing/LoginModal";
 
 const Index = () => {
-  const [loginOpen, setLoginOpen] = useState(false);
   const [logoActivated, setLogoActivated] = useState(false);
+
+  useEffect(() => {
+    // Check for hash and scroll to it
+    const { hash } = window.location;
+    if (hash) {
+      const element = document.getElementById(hash.substring(1));
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth" });
+        }, 500); // Small delay to ensure components are rendered
+      }
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <ExclusivityBar />
-      <Navbar onLogin={() => setLoginOpen(true)} logoActivated={logoActivated} />
-      <HeroSection onStart={() => setLoginOpen(true)} onLogoActivate={setLogoActivated} />
+      <Navbar logoActivated={logoActivated} />
+      <HeroSection onLogoActivate={setLogoActivated} />
       <div className="relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-[0.06] pointer-events-none"
@@ -38,9 +50,8 @@ const Index = () => {
       <ActionStrip />
       <ListingsShowcase />
       <FoundersSection />
-      <FinalCTA onStart={() => setLoginOpen(true)} />
+      <FinalCTA />
       <Footer />
-      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </div>
   );
 };

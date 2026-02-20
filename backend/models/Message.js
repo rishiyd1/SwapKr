@@ -12,9 +12,10 @@ const Message = {
   },
 
   async findById(id) {
-    const result = await pool.query("SELECT * FROM messages WHERE id = $1", [
-      id,
-    ]);
+    const result = await pool.query(
+      "SELECT * FROM messages WHERE id = $1::integer",
+      [id],
+    );
     return result.rows[0] || null;
   },
 
@@ -24,7 +25,7 @@ const Message = {
                     json_build_object('id', u.id, 'name', u.name) AS sender
              FROM messages m
              LEFT JOIN users u ON m."senderId" = u.id
-             WHERE m.id = $1`,
+             WHERE m.id = $1::integer`,
       [id],
     );
     return result.rows[0] || null;
@@ -36,7 +37,7 @@ const Message = {
                     json_build_object('id', u.id, 'name', u.name) AS sender
              FROM messages m
              LEFT JOIN users u ON m."senderId" = u.id
-             WHERE m."chatId" = $1
+             WHERE m."chatId" = $1::integer
              ORDER BY m."createdAt" ASC`,
       [chatId],
     );
@@ -46,8 +47,17 @@ const Message = {
   async markAsRead(chatId, excludeSenderId) {
     await pool.query(
       `UPDATE messages SET "isRead" = true, "updatedAt" = NOW()
-             WHERE "chatId" = $1 AND "senderId" != $2 AND "isRead" = false`,
+             WHERE "chatId" = $1::integer AND "senderId" != $2::integer AND "isRead" = false`,
       [chatId, excludeSenderId],
+    );
+  },
+
+  async deleteByChatIds(chatIds) {
+    if (!chatIds || chatIds.length === 0) return;
+    const placeholders = chatIds.map((_, i) => `$${i + 1}`).join(", ");
+    await pool.query(
+      `DELETE FROM messages WHERE "chatId" IN (${placeholders})`,
+      chatIds,
     );
   },
 };

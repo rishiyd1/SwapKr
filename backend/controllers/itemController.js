@@ -3,13 +3,17 @@ import { Item, ItemImage } from "../models/index.js";
 // POST /api/items - Create a new listing
 export const createItem = async (req, res) => {
   try {
-    const { title, description, price, category, pickupLocation, images } =
+    const { title, description, price, category, pickupLocation, condition } =
       req.body;
     const sellerId = req.user.id; // From auth middleware
 
+    console.log("Create Item Request:", { body: req.body, sellerId });
+
     // Validate required fields
-    if (!title || !price) {
-      return res.status(400).json({ message: "Title and price are required" });
+    if (!title || !price || !category) {
+      return res
+        .status(400)
+        .json({ message: "Title, price, and category are required" });
     }
 
     const newItem = await Item.create({
@@ -18,14 +22,15 @@ export const createItem = async (req, res) => {
       price,
       category: category || "Others",
       pickupLocation,
+      condition: condition || "Used",
       sellerId,
       status: "Available",
     });
 
-    // Handle images if any (array of URLs)
-    if (images && images.length > 0) {
-      const imagePromises = images.map((url) =>
-        ItemImage.create({ itemId: newItem.id, imageUrl: url }),
+    // Handle images from Cloudinary (req.files contains array of files with .path as URL)
+    if (req.files && req.files.length > 0) {
+      const imagePromises = req.files.map((file) =>
+        ItemImage.create({ itemId: newItem.id, imageUrl: file.path }),
       );
       await Promise.all(imagePromises);
     }
@@ -48,9 +53,15 @@ export const createItem = async (req, res) => {
 export const getItems = async (req, res) => {
   try {
     const { search, category, minPrice, maxPrice, status } = req.query;
+    console.log("Get Items Query:", req.query);
     const where = { status: status || "Available" };
 
     if (category) where.category = category;
+
+    // Logic to exclude own items if logged in
+    if (req.user && req.user.id) {
+      where.excludeSellerId = req.user.id;
+    }
 
     const items = await Item.findAll({ where, search, minPrice, maxPrice });
 
@@ -138,7 +149,13 @@ export const deleteItem = async (req, res) => {
     }
 
     // Delete associated images first
-    await ItemImage.destroyByItemId(item.id);
+    await import("../models/index.js").then(({ ItemImage, Chat }) =>
+      Promise.all([
+        ItemImage.destroyByItemId(item.id),
+        Chat.deleteByItemId(item.id),
+      ]),
+    );
+
     await Item.destroy(item.id);
 
     res.status(200).json({ message: "Item deleted successfully" });
