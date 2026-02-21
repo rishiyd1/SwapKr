@@ -108,7 +108,7 @@ const CreateRequestDialog = ({ trigger }) => {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-card border-white/10 text-card-foreground">
+      <DialogContent className="sm:max-w-[425px] bg-card border-white/10 text-card-foreground p-6 sm:p-8">
         <DialogHeader>
           <DialogTitle>Make a Request</DialogTitle>
         </DialogHeader>

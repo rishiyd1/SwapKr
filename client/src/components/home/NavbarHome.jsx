@@ -19,13 +19,7 @@ import {
   Menu,
   Shield,
 } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+
 import CreateItemDialog from "../items/CreateItemDialog";
 import CreateRequestDialog from "../requests/CreateRequestDialog";
 import { Button } from "@/components/ui/button";
@@ -147,6 +141,7 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
       <div className="container flex h-16 items-center px-4 md:px-6">
         {/* Logo & Mobile Menu */}
         <div className="flex items-center gap-2">
+<<<<<<< HEAD
           {/* Mobile Sidebar */}
           <Sheet>
             <SheetTrigger asChild>
@@ -265,6 +260,8 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
             </SheetContent>
           </Sheet>
 
+=======
+>>>>>>> 920c81fb0a360608f82e72147f933eabbafda7ef
           {/* Logo */}
           <Link
             to="/home"
@@ -275,18 +272,18 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
         </div>
 
         {/* Search Bar */}
-        <div className="hidden md:flex flex-1 justify-center px-4 pl-8 h-full items-center">
+        <div className="flex flex-1 justify-center px-2 md:px-4 md:pl-8 h-full items-center">
           <motion.div
             initial={false}
             animate={{ maxWidth: isFocused ? "42rem" : "24rem" }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="relative w-full"
+            className="relative w-full max-w-[24rem] md:max-w-none"
           >
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search for books, electronics, furniture..."
-              className="pl-10 bg-secondary/50 border-white/5 focus-visible:ring-accent w-full transition-all duration-300"
+              placeholder="Search items..."
+              className="pl-10 bg-secondary/50 border-white/5 focus-visible:ring-accent w-full transition-all duration-300 text-sm"
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               value={searchQuery}

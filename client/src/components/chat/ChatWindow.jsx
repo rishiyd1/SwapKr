@@ -42,12 +42,12 @@ const ChatWindow = ({
   }, [chat, onMessagesRead]);
 
   useEffect(() => {
-    if (socket && chat) {
+    if (socket && chat && chat.id) {
       socket.emit("join_chat", { chatId: chat.id });
 
       const handleNewMessage = (message) => {
         // Ensure message belongs to this chat and isn't a duplicate
-        if (message.chatId === parseInt(chat.id)) {
+        if (message.chatId === chat.id) {
           setMessages((prev) => {
             // Check if message already exists (to prevent duplicates from socket + optimistic/refetch)
             if (prev.find((m) => m.id === message.id)) return prev;
@@ -86,11 +86,13 @@ const ChatWindow = ({
           newChat = response.chat;
         }
 
-        socket.emit("send_message", {
-          chatId: newChat.id,
-          senderId: currentUser.id,
-          content,
-        });
+        if (socket) {
+          socket.emit("send_message", {
+            chatId: newChat.id,
+            senderId: currentUser.id,
+            content,
+          });
+        }
         onChatStarted(newChat); // Refetch chats to replace draft with real one
       } catch (error) {
         console.error("Failed to start conversation:", error);
@@ -101,11 +103,19 @@ const ChatWindow = ({
 
     // In a real app, you'd emit via socket OR call API.
     // backend's socket.js listens for 'send_message' and handles creation.
-    socket.emit("send_message", {
-      chatId: chat.id,
-      senderId: currentUser.id,
-      content,
-    });
+    if (socket) {
+      socket.emit("send_message", {
+        chatId: chat.id,
+        senderId: currentUser.id,
+        content,
+      });
+    } else {
+      // Fallback: send via HTTP API
+      await chatsService.sendMessage(chat.id, content).then((msg) => {
+        setMessages((prev) => [...prev, msg]);
+        setTimeout(scrollToBottom, 50);
+      });
+    }
   };
 
   const handleAccept = async () => {
@@ -150,7 +160,7 @@ const ChatWindow = ({
     );
   }
 
-  const isBuyer = parseInt(chat?.buyerId) === parseInt(currentUser?.id);
+  const isBuyer = chat?.buyerId === currentUser?.id;
   const otherUser =
     chat?.otherUser || (isBuyer ? chat?.seller : chat?.buyer) || request?.buyer;
   // Determine item to display
@@ -222,7 +232,7 @@ const ChatWindow = ({
         )}
 
         {messages.map((msg, idx) => {
-          const isMe = parseInt(msg.senderId) === parseInt(currentUser?.id);
+          const isMe = msg.senderId === currentUser?.id;
           return (
             <div
               key={msg.id || idx}
