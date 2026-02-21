@@ -70,15 +70,13 @@ const ItemCard = ({
 
   const existingRequest = myRequests?.find(
     (r) =>
-      parseInt(r.itemId) === parseInt(id) &&
+      r.itemId === id &&
       (r.status === "Pending" ||
         r.status === "Accepted" ||
         r.status === "Rejected"),
   );
 
-  const existingChat = myConversations?.find(
-    (c) => parseInt(c.itemId) === parseInt(id),
-  );
+  const existingChat = myConversations?.find((c) => c.itemId === id);
 
   const getButtonConfig = () => {
     if (existingChat) {

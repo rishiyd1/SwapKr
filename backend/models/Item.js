@@ -13,7 +13,7 @@ const Item = {
   }) {
     const result = await pool.query(
       `INSERT INTO items (title, description, price, category, condition, "pickupLocation", "sellerId", status, "createdAt", "updatedAt")
-             VALUES ($1, $2, $3::numeric, $4, $5, $6, $7::integer, $8, NOW(), NOW())
+             VALUES ($1, $2, $3::numeric, $4, $5, $6, $7, $8, NOW(), NOW())
              RETURNING *`,
       [
         title,
