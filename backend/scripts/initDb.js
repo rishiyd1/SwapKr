@@ -166,6 +166,8 @@ const createTables = async () => {
                 type request_type NOT NULL DEFAULT 'Normal',
                 "tokenCost" INTEGER DEFAULT 0,
                 status request_status DEFAULT 'Open',
+                budget DECIMAL(10, 2),
+                category item_category DEFAULT 'Others',
                 "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
@@ -177,7 +179,8 @@ const createTables = async () => {
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 "buyerId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 "sellerId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                "itemId" UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+                "itemId" UUID REFERENCES items(id) ON DELETE CASCADE,
+                "requestId" UUID REFERENCES requests(id) ON DELETE CASCADE,
                 "lastMessageAt" TIMESTAMPTZ DEFAULT NOW(),
                 status chat_status DEFAULT 'Active',
                 "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
