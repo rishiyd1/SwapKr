@@ -58,8 +58,8 @@ const validateJobData = (jobData) => {
  * @param {string} jobData.title - Urgent request title
  * @param {string} jobData.description - Urgent request description
  * @param {string} jobData.requesterName - Name of the user who created the request
- * @param {number} jobData.requesterId - ID of the requester (excluded from recipients)
- * @param {number} jobData.requestId - ID of the saved request record
+ * @param {string} jobData.requesterId - ID of the requester (excluded from recipients)
+ * @param {string} jobData.requestId - ID of the saved request record
  */
 export const addEmailJob = async (jobData) => {
   // Validate before enqueuing

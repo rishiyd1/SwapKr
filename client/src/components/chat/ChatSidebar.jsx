@@ -58,7 +58,7 @@ const ChatSidebar = ({
                 key={`request-${request.id}`}
                 onClick={() => onSelectRequest(request)}
                 className={`w-full p-3 rounded-xl transition-all flex items-start gap-3 text-left ${
-                  parseInt(selectedRequestId) === parseInt(request.id)
+                  selectedRequestId === request.id
                     ? "bg-primary/10 border border-primary/20"
                     : "hover:bg-white/5 border border-transparent"
                 }`}
@@ -107,7 +107,7 @@ const ChatSidebar = ({
                 key={`chat-${chat.id}`}
                 onClick={() => onSelectChat(chat)}
                 className={`w-full p-3 rounded-xl transition-all flex items-start gap-3 text-left ${
-                  parseInt(selectedChatId) === parseInt(chat.id)
+                  selectedChatId === chat.id
                     ? "bg-primary/10 border border-primary/20"
                     : "hover:bg-white/5 border border-transparent"
                 }`}
