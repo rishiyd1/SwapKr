@@ -18,10 +18,7 @@ const Chat = {
   },
 
   async findById(id) {
-    const result = await pool.query(
-      "SELECT * FROM chats WHERE id = $1::integer",
-      [id],
-    );
+    const result = await pool.query("SELECT * FROM chats WHERE id = $1", [id]);
     return result.rows[0] || null;
   },
 
@@ -41,22 +38,21 @@ const Chat = {
              LEFT JOIN users s ON c."sellerId" = s.id
              LEFT JOIN items i ON c."itemId" = i.id
              LEFT JOIN requests r ON c."requestId" = r.id
-             WHERE c.id = $1::integer`,
+             WHERE c.id = $1`,
       [id],
     );
     return result.rows[0] || null;
   },
 
   async findOne({ buyerId, sellerId, itemId, requestId }) {
-    let query =
-      'SELECT * FROM chats WHERE "buyerId" = $1::integer AND "sellerId" = $2::integer';
+    let query = 'SELECT * FROM chats WHERE "buyerId" = $1 AND "sellerId" = $2';
     const params = [buyerId, sellerId];
 
     if (itemId) {
-      query += ' AND "itemId" = $3::integer';
+      query += ' AND "itemId" = $3';
       params.push(itemId);
     } else if (requestId) {
-      query += ' AND "requestId" = $3::integer';
+      query += ' AND "requestId" = $3';
       params.push(requestId);
     } else {
       return null;
@@ -79,14 +75,14 @@ const Chat = {
                     ELSE NULL END AS request,
                     (SELECT COUNT(*)::integer FROM messages m 
                      WHERE m."chatId" = c.id 
-                     AND m."senderId" != $1::integer 
+                     AND m."senderId" != $1 
                      AND m."isRead" = false) AS "unreadCount"
              FROM chats c
              LEFT JOIN users b ON c."buyerId" = b.id
              LEFT JOIN users s ON c."sellerId" = s.id
              LEFT JOIN items i ON c."itemId" = i.id
              LEFT JOIN requests r ON c."requestId" = r.id
-             WHERE c."buyerId" = $1::integer OR c."sellerId" = $1::integer
+             WHERE c."buyerId" = $1 OR c."sellerId" = $1
              ORDER BY c."lastMessageAt" DESC`,
       [userId],
     );
