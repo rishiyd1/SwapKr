@@ -11,6 +11,11 @@ const authenticateToken = (req, res, next) => {
 
   if (token == null) return res.sendStatus(401); // Unauthorized
 
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403); // Forbidden
+        req.user = user;
+        next();
+    });
   jwt.verify(
     token,
     process.env.JWT_SECRET || "secret_key_change_me",

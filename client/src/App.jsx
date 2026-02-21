@@ -8,6 +8,8 @@ import SpinnerLogo from "./components/SpinnerLogo";
 import { SocketProvider } from "./components/chat/SocketProvider";
 import PublicRoute from "./components/PublicRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+
 
 // Eagerly loaded (landing + login are entry points)
 import Index from "./pages/Index";
@@ -95,6 +97,15 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <Admin />
+                  </AdminRoute>
+                }
+              />
+
 
               <Route
                 path="/admin"
