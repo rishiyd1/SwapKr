@@ -1,29 +1,27 @@
 import { google } from "googleapis";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load service account credentials (gracefully handle missing file)
+// Load service account credentials exclusively from environment variables
 let sheets = null;
-const credentialsPath = path.join(__dirname, "../credentials.json");
 
-if (fs.existsSync(credentialsPath)) {
-  const credentials = JSON.parse(fs.readFileSync(credentialsPath, "utf8"));
-  const { client_email, private_key } = credentials;
+const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+const privateKey = process.env.GOOGLE_PRIVATE_KEY;
+
+if (clientEmail && privateKey) {
+  // Ensure newlines in private key are correctly parsed from env vars
+  const formattedPrivateKey = privateKey.replace(/\\n/g, "\n");
 
   const auth = new google.auth.JWT({
-    email: client_email,
-    key: private_key,
+    email: clientEmail,
+    key: formattedPrivateKey,
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 
   sheets = google.sheets({ version: "v4", auth });
-  console.log("✓ Google Sheets credentials loaded");
+  console.log("✓ Google Sheets credentials loaded from environment variables");
 } else {
-  console.warn("⚠ credentials.json not found — feedback endpoint disabled");
+  console.warn(
+    "⚠ GOOGLE_CLIENT_EMAIL or GOOGLE_PRIVATE_KEY not found in environment — feedback endpoint disabled",
+  );
 }
 
 export const sendFeedback = async (req, res) => {
@@ -31,7 +29,8 @@ export const sendFeedback = async (req, res) => {
     if (!sheets) {
       return res.status(503).json({
         success: false,
-        message: "Feedback service not configured (missing credentials.json)",
+        message:
+          "Feedback service not configured (missing environment variables)",
       });
     }
 

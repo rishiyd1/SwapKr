@@ -158,14 +158,14 @@ export const sendMessage = async (req, res) => {
 
     // Create message
     const message = await Message.create({
-      chatId: parseInt(chatId),
+      chatId: chatId,
       itemId: chat.itemId,
       senderId,
       content,
     });
 
     // Update chat's lastMessageAt
-    await Chat.update(parseInt(chatId), { lastMessageAt: new Date() });
+    await Chat.update(chatId, { lastMessageAt: new Date() });
 
     // Fetch with sender info
     const fullMessage = await Message.findByIdWithSender(message.id);

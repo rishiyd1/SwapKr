@@ -55,7 +55,18 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="flex flex-col md:flex-row justify-between gap-10">
           <div>
-            <SwapkrLogo />
+            <div className="flex items-center gap-1">
+              <img
+                src="/swapkr.svg"
+                alt="SwapKr"
+                width="36"
+                height="36"
+                className="object-contain"
+              />
+              <span className="font-display text-[1.7rem] font-bold text-primary leading-none pt-2">
+                wapKr
+              </span>
+            </div>
             <p className="text-sm text-muted-foreground mt-3 max-w-xs">
               the campus marketplace that actually makes sense
             </p>
