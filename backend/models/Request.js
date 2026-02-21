@@ -106,6 +106,30 @@ const Request = {
   async destroy(id) {
     await pool.query("DELETE FROM requests WHERE id = $1", [id]);
   },
+
+  async findAllPendingApproval() {
+    const result = await pool.query(
+      `SELECT r.*,
+              json_build_object('id', u.id, 'name', u.name, 'email', u.email) AS requester
+       FROM requests r
+       LEFT JOIN users u ON r."requesterId" = u.id
+       WHERE r.status = 'PendingApproval'
+       ORDER BY r."createdAt" DESC`,
+    );
+    return result.rows;
+  },
+
+  async findAllUrgentOpen() {
+    const result = await pool.query(
+      `SELECT r.*,
+              json_build_object('id', u.id, 'name', u.name, 'email', u.email, 'hostel', u.hostel) AS requester
+       FROM requests r
+       LEFT JOIN users u ON r."requesterId" = u.id
+       WHERE r.type = 'Urgent' AND r.status = 'Open'
+       ORDER BY r."createdAt" DESC`,
+    );
+    return result.rows;
+  },
 };
 
 export default Request;

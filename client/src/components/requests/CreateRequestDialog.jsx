@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Loader2, Zap } from "lucide-react";
+import { PlusCircle, Loader2, Zap, AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -208,6 +208,17 @@ const CreateRequestDialog = ({ trigger }) => {
               onCheckedChange={handleToggleUrgent}
             />
           </div>
+
+          {formData.isUrgent && (
+            <div className="flex gap-2 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 text-amber-400">
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+              <p className="text-[11px] leading-relaxed">
+                <span className="font-bold">Warning:</span> Urgent requests are
+                reviewed by admins. Misuse of the urgent feature may result in
+                your account being deleted.
+              </p>
+            </div>
+          )}
 
           <div className="flex justify-end pt-4">
             <Button type="submit" disabled={isLoading}>

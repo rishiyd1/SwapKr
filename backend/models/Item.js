@@ -172,6 +172,21 @@ const Item = {
   async destroy(id) {
     await pool.query("DELETE FROM items WHERE id = $1", [id]);
   },
+
+  async findAllPending() {
+    const result = await pool.query(
+      `SELECT i.*,
+              json_build_object('id', s.id, 'name', s.name, 'email', s.email, 'hostel', s.hostel, 'phoneNumber', s."phoneNumber") AS seller,
+              COALESCE(json_agg(json_build_object('id', img.id, 'itemId', img."itemId", 'imageUrl', img."imageUrl")) FILTER (WHERE img.id IS NOT NULL), '[]') AS images
+       FROM items i
+       LEFT JOIN users s ON i."sellerId" = s.id
+       LEFT JOIN item_images img ON img."itemId" = i.id
+       WHERE i.status = 'Pending'
+       GROUP BY i.id, s.id, s.name, s.email, s.hostel, s."phoneNumber"
+       ORDER BY i."createdAt" DESC`,
+    );
+    return result.rows;
+  },
 };
 
 export default Item;

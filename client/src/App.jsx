@@ -21,6 +21,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const ItemDetail = lazy(() => import("./pages/ItemDetail"));
 const RequestDetail = lazy(() => import("./pages/RequestDetail"));
 const Chats = lazy(() => import("./pages/Chats"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 
 const queryClient = new QueryClient();
 
@@ -91,6 +92,15 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Chats />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminPanel />
                   </ProtectedRoute>
                 }
               />

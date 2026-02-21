@@ -50,7 +50,7 @@ export const createItem = async (req, res) => {
       pickupLocation,
       condition: condition || "Used",
       sellerId,
-      status: "Available",
+      status: "Pending",
     });
 
     // Handle images from Cloudinary (req.files contains array of files with .path as URL)

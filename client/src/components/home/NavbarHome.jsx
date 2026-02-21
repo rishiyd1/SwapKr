@@ -15,6 +15,7 @@ import {
   PlusCircle,
   Trash2,
   Check,
+  Shield,
 } from "lucide-react";
 
 import CreateItemDialog from "../items/CreateItemDialog";
@@ -335,6 +336,22 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
                   <User className="mr-2 h-4 w-4" /> Profile
                 </Link>
               </DropdownMenuItem>
+              {user &&
+                [
+                  "kushagars.ic.23@nitj.ac.in",
+                  "rishi.ic.23@nitj.ac.in",
+                  "vedanshm.ee.23@nitj.ac.in",
+                  "ashishg.ic.23@nitj.ac.in",
+                ].includes(user.email?.toLowerCase()) && (
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Link
+                      to="/admin"
+                      className="flex items-center w-full text-purple-400"
+                    >
+                      <Shield className="mr-2 h-4 w-4" /> Admin Panel
+                    </Link>
+                  </DropdownMenuItem>
+                )}
               <DropdownMenuSeparator className="bg-white/10" />
               <DropdownMenuItem
                 className="cursor-pointer text-red-500 focus:text-red-500"

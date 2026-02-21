@@ -352,7 +352,9 @@ const Profile = () => {
                                     className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                                       item.status === "Available"
                                         ? "bg-green-500/10 text-green-500 border border-green-500/20"
-                                        : "bg-red-500/10 text-red-500 border border-red-500/20"
+                                        : item.status === "Pending"
+                                          ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                                          : "bg-red-500/10 text-red-500 border border-red-500/20"
                                     }`}
                                   >
                                     {item.status}

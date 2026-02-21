@@ -16,6 +16,7 @@ import orderRoutes from "./routes/orders.js";
 import chatRoutes from "./routes/chats.js";
 import feedbackRoutes from "./routes/feedback.js";
 import notificationRoutes from "./routes/notifications.js";
+import adminRoutes from "./routes/admin.js";
 import "./jobs/tokenReset.js";
 import "./jobs/notificationCleanup.js";
 import "./jobs/annualCleanup.js";
@@ -62,6 +63,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Basic Route
 app.get("/", (req, res) => {
