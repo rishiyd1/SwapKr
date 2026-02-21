@@ -141,7 +141,6 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
       <div className="container flex h-16 items-center px-4 md:px-6">
         {/* Logo & Mobile Menu */}
         <div className="flex items-center gap-2">
-<<<<<<< HEAD
           {/* Mobile Sidebar */}
           <Sheet>
             <SheetTrigger asChild>
@@ -260,8 +259,6 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
             </SheetContent>
           </Sheet>
 
-=======
->>>>>>> 920c81fb0a360608f82e72147f933eabbafda7ef
           {/* Logo */}
           <Link
             to="/home"
