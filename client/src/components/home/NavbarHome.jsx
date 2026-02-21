@@ -15,8 +15,6 @@ import {
   PlusCircle,
   Trash2,
   Check,
-  Store,
-  Menu,
   Shield,
 } from "lucide-react";
 
@@ -472,13 +470,22 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
                   <User className="mr-2 h-4 w-4" /> Profile
                 </Link>
               </DropdownMenuItem>
-              {user?.role === "admin" && (
-                <DropdownMenuItem className="cursor-pointer text-indigo-400 focus:text-indigo-400">
-                  <Link to="/admin" className="flex items-center w-full">
-                    <Shield className="mr-2 h-4 w-4" /> Admin Panel
-                  </Link>
-                </DropdownMenuItem>
-              )}
+              {user &&
+                [
+                  "kushagars.ic.23@nitj.ac.in",
+                  "rishi.ic.23@nitj.ac.in",
+                  "vedanshm.ee.23@nitj.ac.in",
+                  "ashishg.ic.23@nitj.ac.in",
+                ].includes(user.email?.toLowerCase()) && (
+                  <DropdownMenuItem className="cursor-pointer">
+                    <Link
+                      to="/admin"
+                      className="flex items-center w-full text-purple-400"
+                    >
+                      <Shield className="mr-2 h-4 w-4" /> Admin Panel
+                    </Link>
+                  </DropdownMenuItem>
+                )}
               <DropdownMenuSeparator className="bg-white/10" />
               <DropdownMenuItem
                 className="cursor-pointer text-red-500 focus:text-red-500"

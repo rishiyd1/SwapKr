@@ -23,8 +23,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const ItemDetail = lazy(() => import("./pages/ItemDetail"));
 const RequestDetail = lazy(() => import("./pages/RequestDetail"));
 const Chats = lazy(() => import("./pages/Chats"));
-const Admin = lazy(() => import("./pages/Admin"));
-
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 
 const queryClient = new QueryClient();
 
@@ -107,6 +106,15 @@ const App = () => (
                 }
               />
 
+
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminPanel />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

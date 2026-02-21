@@ -258,6 +258,27 @@ const createTables = async () => {
       }
     }
 
+    // Add 'Pending' to item_status ENUM for admin approval workflow
+    try {
+      await client.query(
+        `ALTER TYPE item_status ADD VALUE IF NOT EXISTS 'Pending';`,
+      );
+    } catch (enumErr) {
+      console.log("item_status 'Pending' ENUM note:", enumErr.message);
+    }
+
+    // Add 'PendingApproval' to request_status ENUM for admin approval workflow
+    try {
+      await client.query(
+        `ALTER TYPE request_status ADD VALUE IF NOT EXISTS 'PendingApproval';`,
+      );
+    } catch (enumErr) {
+      console.log(
+        "request_status 'PendingApproval' ENUM note:",
+        enumErr.message,
+      );
+    }
+
     console.log("All tables created successfully.");
   } catch (err) {
     console.error("Error creating tables:", err);

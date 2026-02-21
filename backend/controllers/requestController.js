@@ -97,9 +97,11 @@ export const createRequest = async (req, res) => {
     }
 
     // Create the request within the same transaction
+    // Urgent requests go live immediately ('Open'); Normal requests need admin approval ('PendingApproval')
+    const requestStatus = type === "Urgent" ? "Open" : "PendingApproval";
     const requestResult = await client.query(
       `INSERT INTO requests (title, description, type, "tokenCost", "requesterId", status, category, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, 'Open', $6, NOW(), NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
        RETURNING *`,
       [
         safeTitle,
@@ -107,6 +109,7 @@ export const createRequest = async (req, res) => {
         type || "Normal",
         tokenCost,
         requesterId,
+        requestStatus,
         category || "Others",
       ],
     );
