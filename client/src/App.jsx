@@ -10,7 +10,6 @@ import PublicRoute from "./components/PublicRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 
-
 // Eagerly loaded (landing + login are entry points)
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -101,18 +100,8 @@ const App = () => (
                 path="/admin"
                 element={
                   <AdminRoute>
-                    <Admin />
-                  </AdminRoute>
-                }
-              />
-
-
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute>
                     <AdminPanel />
-                  </ProtectedRoute>
+                  </AdminRoute>
                 }
               />
 
