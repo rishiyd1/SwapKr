@@ -8,6 +8,8 @@ import SpinnerLogo from "./components/SpinnerLogo";
 import { SocketProvider } from "./components/chat/SocketProvider";
 import PublicRoute from "./components/PublicRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+
 
 // Eagerly loaded (landing + login are entry points)
 import Index from "./pages/Index";
@@ -21,6 +23,8 @@ const Profile = lazy(() => import("./pages/Profile"));
 const ItemDetail = lazy(() => import("./pages/ItemDetail"));
 const RequestDetail = lazy(() => import("./pages/RequestDetail"));
 const Chats = lazy(() => import("./pages/Chats"));
+const Admin = lazy(() => import("./pages/Admin"));
+
 
 const queryClient = new QueryClient();
 
@@ -94,6 +98,15 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <Admin />
+                  </AdminRoute>
+                }
+              />
+
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

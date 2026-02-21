@@ -17,6 +17,7 @@ import {
   Check,
   Store,
   Menu,
+  Shield,
 } from "lucide-react";
 import {
   Sheet,
@@ -55,9 +56,26 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
+    const fetchProfile = async () => {
+      try {
+        const currentUser = authService.getCurrentUser();
+        setUser(currentUser);
+
+        // Refresh profile to get the latest role/tokens
+        if (currentUser) {
+          const profileRes = await authService.getProfile();
+          if (profileRes.success && profileRes.user) {
+            setUser(profileRes.user);
+            localStorage.setItem("user", JSON.stringify(profileRes.user));
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching profile:", err);
+      }
+    };
+    fetchProfile();
   }, []);
+
 
   const { data } = useQuery({
     queryKey: ["notifications"],
@@ -202,6 +220,16 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
                       <User className="h-5 w-5" /> Profile
                     </Button>
                   </Link>
+                  {user?.role === "admin" && (
+                    <Link to="/admin">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start gap-3 h-12 text-indigo-400"
+                      >
+                        <Shield className="h-5 w-5" /> Admin Panel
+                      </Button>
+                    </Link>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -352,11 +380,10 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
                     {displayedNotifications.map((notif) => (
                       <div
                         key={notif.id}
-                        className={`flex gap-3 p-4 border-b border-white/5 transition-colors hover:bg-white/5 relative group cursor-pointer ${
-                          !notif.isRead
-                            ? "bg-accent/[0.08] border-l-2 border-l-accent"
-                            : "border-l-2 border-l-transparent"
-                        }`}
+                        className={`flex gap-3 p-4 border-b border-white/5 transition-colors hover:bg-white/5 relative group cursor-pointer ${!notif.isRead
+                          ? "bg-accent/[0.08] border-l-2 border-l-accent"
+                          : "border-l-2 border-l-transparent"
+                          }`}
                         onClick={() => {
                           if (!notif.isRead) markReadMutation.mutate(notif.id);
                           if (notif.type === "Request") {
@@ -451,6 +478,13 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
                   <User className="mr-2 h-4 w-4" /> Profile
                 </Link>
               </DropdownMenuItem>
+              {user?.role === "admin" && (
+                <DropdownMenuItem className="cursor-pointer text-indigo-400 focus:text-indigo-400">
+                  <Link to="/admin" className="flex items-center w-full">
+                    <Shield className="mr-2 h-4 w-4" /> Admin Panel
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator className="bg-white/10" />
               <DropdownMenuItem
                 className="cursor-pointer text-red-500 focus:text-red-500"

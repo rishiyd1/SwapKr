@@ -196,6 +196,7 @@ export const verifyOtp = async (req, res) => {
         year: user.year,
         hostel: user.hostel,
         tokens: user.tokens,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -232,7 +233,7 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // Compare password
+    // Compare password 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({
@@ -243,10 +244,11 @@ export const loginUser = async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET || "secret_key_change_me",
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
       { expiresIn: "7d" },
     );
+
 
     res.status(200).json({
       success: true,
@@ -261,6 +263,7 @@ export const loginUser = async (req, res) => {
         year: user.year,
         hostel: user.hostel,
         tokens: user.tokens,
+        role: user.role,
       },
     });
   } catch (error) {
@@ -489,6 +492,7 @@ export const updateProfile = async (req, res) => {
         year: updatedUser.year,
         hostel: updatedUser.hostel,
         tokens: updatedUser.tokens,
+        role: updatedUser.role,
       },
     });
   } catch (error) {

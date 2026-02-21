@@ -50,8 +50,9 @@ export const createItem = async (req, res) => {
       pickupLocation,
       condition: condition || "Used",
       sellerId,
-      status: "Available",
+      status: "Pending",
     });
+
 
     // Handle images from Cloudinary (req.files contains array of files with .path as URL)
     if (req.files && req.files.length > 0) {
@@ -78,9 +79,10 @@ export const createItem = async (req, res) => {
 // GET /api/items - Get all listings (with filters)
 export const getItems = async (req, res) => {
   try {
-    const { search, category, minPrice, maxPrice, status } = req.query;
+    const { search, category, minPrice, maxPrice } = req.query;
     console.log("Get Items Query:", req.query);
-    const where = { status: status || "Available" };
+    const where = { status: "Available" };
+
 
     if (category) where.category = category;
 
