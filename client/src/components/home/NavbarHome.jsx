@@ -70,7 +70,6 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
     fetchProfile();
   }, []);
 
-
   const { data } = useQuery({
     queryKey: ["notifications"],
     queryFn: notificationsService.getNotifications,
@@ -374,10 +373,11 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
                     {displayedNotifications.map((notif) => (
                       <div
                         key={notif.id}
-                        className={`flex gap-3 p-4 border-b border-white/5 transition-colors hover:bg-white/5 relative group cursor-pointer ${!notif.isRead
-                          ? "bg-accent/[0.08] border-l-2 border-l-accent"
-                          : "border-l-2 border-l-transparent"
-                          }`}
+                        className={`flex gap-3 p-4 border-b border-white/5 transition-colors hover:bg-white/5 relative group cursor-pointer ${
+                          !notif.isRead
+                            ? "bg-accent/[0.08] border-l-2 border-l-accent"
+                            : "border-l-2 border-l-transparent"
+                        }`}
                         onClick={() => {
                           if (!notif.isRead) markReadMutation.mutate(notif.id);
                           if (notif.type === "Request") {
