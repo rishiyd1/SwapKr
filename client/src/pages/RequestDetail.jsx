@@ -56,8 +56,7 @@ const RequestDetail = () => {
     currentUser && request && currentUser.id === request.requesterId;
 
   const existingChat =
-    !isOwner &&
-    myConversations?.find((c) => parseInt(c.requestId) === parseInt(id));
+    !isOwner && myConversations?.find((c) => c.requestId === id);
 
   const handleRequestUpdated = () => {
     queryClient.invalidateQueries(["request", id]);

@@ -336,7 +336,10 @@ async function run() {
 
   // 21. Get item by ID — not found
   {
-    const r = await req("GET", "/api/items/99999");
+    const r = await req(
+      "GET",
+      "/api/items/00000000-0000-0000-0000-000000000000",
+    );
     log(
       "GET /api/items/:id (not found)",
       r.status === 404,

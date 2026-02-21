@@ -159,7 +159,7 @@ const CreateItemDialog = ({ trigger }) => {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] bg-card border-white/10 text-card-foreground">
+      <DialogContent className="sm:max-w-[500px] bg-card border-white/10 text-card-foreground p-6 sm:p-8">
         <DialogHeader>
           <DialogTitle>Sell an Item</DialogTitle>
         </DialogHeader>

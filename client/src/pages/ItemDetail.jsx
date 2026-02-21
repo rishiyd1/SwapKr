@@ -71,15 +71,14 @@ const ItemDetail = () => {
     !isOwner &&
     myRequests?.find(
       (r) =>
-        parseInt(r.itemId) === parseInt(id) &&
+        r.itemId === id &&
         (r.status === "Pending" ||
           r.status === "Accepted" ||
           r.status === "Rejected"),
     );
 
   const existingChat =
-    !isOwner &&
-    myConversations?.find((c) => parseInt(c.itemId) === parseInt(id));
+    !isOwner && myConversations?.find((c) => c.itemId === id);
 
   // 3. Helper Functions
   const getButtonConfig = () => {

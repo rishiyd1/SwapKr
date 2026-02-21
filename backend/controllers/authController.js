@@ -562,7 +562,7 @@ export const getTokenBalance = async (req, res) => {
 // DELETE /api/auth/account (protected route)
 export const deleteAccount = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { password } = req.body;
 
     // Import models here, as they are needed before user lookup
