@@ -77,7 +77,7 @@ const createTables = async () => {
     // Create ENUM types (safe: IF NOT EXISTS via DO block)
     await client.query(`
             DO $$ BEGIN
-                CREATE TYPE item_category AS ENUM ('Equipments', 'Daily Use', 'Academics', 'Sports', 'Others');
+                CREATE TYPE item_category AS ENUM ('Hardware', 'Daily Use', 'Academics', 'Sports', 'Others');
             EXCEPTION WHEN duplicate_object THEN null;
             END $$;
         `);
@@ -242,6 +242,21 @@ const createTables = async () => {
             CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications("userId");
             CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications("userId") WHERE "isRead" = false;
         `);
+
+    // Rename ENUM value from 'Equipments' to 'Hardware' if it exists
+    try {
+      await client.query(
+        `ALTER TYPE item_category RENAME VALUE 'Equipments' TO 'Hardware';`,
+      );
+    } catch (enumErr) {
+      if (enumErr.code !== "42704" && enumErr.code !== "22P04") {
+        // Ignore if type doesn't exist or value doesn't exist/already renamed
+        console.log(
+          "Minor non-fatal error during ENUM rename operations:",
+          enumErr.message,
+        );
+      }
+    }
 
     console.log("All tables created successfully.");
   } catch (err) {
