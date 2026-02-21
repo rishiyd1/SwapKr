@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![SwapKr Logo](https://swapkr.tech/logo.png)
+![SwapKr Logo](client/public/swapkr.svg)
 
 ### The Ultimate Campus Marketplace
 

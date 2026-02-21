@@ -86,9 +86,9 @@ const BATCH_DELAY_MS = parseInt(process.env.EMAIL_BATCH_DELAY_MS) || 1000;
 const ensureBroadcastLogsTable = async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS broadcast_logs (
-      id SERIAL PRIMARY KEY,
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       job_id VARCHAR(255) UNIQUE NOT NULL,
-      request_id INTEGER,
+      request_id UUID,
       status VARCHAR(20) DEFAULT 'pending'
         CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'retrying')),
       attempt INTEGER DEFAULT 1,
