@@ -12,6 +12,8 @@ export const initSocket = (server) => {
           "http://127.0.0.1:8080",
           "http://localhost:5173",
           "http://127.0.0.1:5173",
+          "http://localhost:8081",
+          "http://127.0.0.1:8081",
         ].filter(Boolean);
 
         // Allow requests with no origin (like mobile apps or curl requests)
@@ -36,10 +38,9 @@ export const initSocket = (server) => {
 
     // Register user
     socket.on("register", (userId) => {
-      const uID = parseInt(userId);
-      socket.userId = uID;
-      onlineUsers.set(uID, socket.id);
-      socket.broadcast.emit("user_online", uID);
+      socket.userId = userId;
+      onlineUsers.set(userId, socket.id);
+      socket.broadcast.emit("user_online", userId);
     });
 
     // Join a chat room (using the actual chatId from the database)
@@ -69,10 +70,7 @@ export const initSocket = (server) => {
           return;
         }
 
-        if (
-          parseInt(chat.buyerId) !== parseInt(senderId) &&
-          parseInt(chat.sellerId) !== parseInt(senderId)
-        ) {
+        if (chat.buyerId !== senderId && chat.sellerId !== senderId) {
           console.log(
             `[socket] Auth failed for user ${senderId} in chat ${chatId}`,
           );
@@ -82,14 +80,14 @@ export const initSocket = (server) => {
 
         // Create the message in the database
         const message = await Message.create({
-          chatId: parseInt(chatId),
+          chatId: chatId,
           itemId: chat.itemId,
-          senderId: parseInt(senderId),
+          senderId: senderId,
           content,
         });
 
         // Update chat's lastMessageAt
-        await Chat.update(parseInt(chatId), { lastMessageAt: new Date() });
+        await Chat.update(chatId, { lastMessageAt: new Date() });
 
         // Fetch message with sender info
         const fullMessage = await Message.findByIdWithSender(message.id);
@@ -101,16 +99,13 @@ export const initSocket = (server) => {
 
         // Also notify the recipient globally if they're not in the room
         const recipientId =
-          parseInt(chat.buyerId) === parseInt(senderId)
-            ? chat.sellerId
-            : chat.buyerId;
+          chat.buyerId === senderId ? chat.sellerId : chat.buyerId;
 
-        const recipientID = parseInt(recipientId);
         const recipientSocketId =
-          onlineUsers.get(recipientID.toString()) ||
-          onlineUsers.get(recipientID);
+          onlineUsers.get(recipientId.toString()) ||
+          onlineUsers.get(recipientId);
         if (recipientSocketId) {
-          console.log(`[socket] Notifying recipient ${recipientID} globally`);
+          console.log(`[socket] Notifying recipient ${recipientId} globally`);
           io.to(recipientSocketId).emit("receive_message", fullMessage);
         }
       } catch (error) {

@@ -70,7 +70,7 @@ export const sendBuyRequest = async (req, res) => {
     const io = req.app.get("io");
     if (io) {
       const { onlineUsers } = await import("../utils/socketStore.js");
-      const sellerId = parseInt(item.sellerId);
+      const sellerId = item.sellerId;
       const sellerSocketId =
         onlineUsers.get(sellerId.toString()) || onlineUsers.get(sellerId);
       if (sellerSocketId) {
@@ -184,7 +184,7 @@ export const acceptRequest = async (req, res) => {
     const io = req.app.get("io");
     if (io) {
       const { onlineUsers } = await import("../utils/socketStore.js");
-      const buyerId = parseInt(buyRequest.buyerId);
+      const buyerId = buyRequest.buyerId;
       const buyerSocketId =
         onlineUsers.get(buyerId.toString()) || onlineUsers.get(buyerId);
       console.log(
@@ -192,7 +192,7 @@ export const acceptRequest = async (req, res) => {
       );
       if (buyerSocketId) {
         io.to(buyerSocketId).emit("buy_request_accepted", {
-          requestId: parseInt(requestId),
+          requestId: requestId,
           chat: fullChat,
         });
       }
@@ -251,12 +251,12 @@ export const rejectRequest = async (req, res) => {
     const io = req.app.get("io");
     if (io) {
       const { onlineUsers } = await import("../utils/socketStore.js");
-      const buyerId = parseInt(buyRequest.buyerId);
+      const buyerId = buyRequest.buyerId;
       const buyerSocketId =
         onlineUsers.get(buyerId.toString()) || onlineUsers.get(buyerId);
       if (buyerSocketId) {
         io.to(buyerSocketId).emit("buy_request_rejected", {
-          requestId: parseInt(requestId),
+          requestId: requestId,
         });
       }
     }
@@ -319,12 +319,12 @@ export const markAsSold = async (req, res) => {
     const io = req.app.get("io");
     if (io) {
       const { onlineUsers } = await import("../utils/socketStore.js");
-      const buyerId = parseInt(buyRequest.buyerId);
+      const buyerId = buyRequest.buyerId;
       const buyerSocketId =
         onlineUsers.get(buyerId.toString()) || onlineUsers.get(buyerId);
       if (buyerSocketId) {
         io.to(buyerSocketId).emit("item_sold", {
-          requestId: parseInt(requestId),
+          requestId: requestId,
           itemId: buyRequest.itemId,
           chatId: chat ? chat.id : null,
         });
