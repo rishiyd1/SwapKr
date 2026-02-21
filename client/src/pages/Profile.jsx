@@ -21,11 +21,7 @@ import {
 import { AnimatePresence } from "framer-motion";
 import { useItems, useMyListings } from "@/hooks/useItems";
 import { useRequests, useMyRequests } from "@/hooks/useRequests";
-import {
-  useProfile,
-  useUpdateProfile,
-  useDeleteAccount,
-} from "@/hooks/useProfile";
+import { useProfile, useDeleteAccount } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -33,7 +29,7 @@ import { authService } from "@/services/auth.service"; // Keep for types or util
 import NavbarHome from "@/components/home/NavbarHome";
 import Footer from "@/components/landing/Footer";
 import { Link, useNavigate } from "react-router-dom";
-import { formatTimeAgo } from "@/lib/utils";
+import { formatTimeAgo, formatAcademicYear } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,34 +42,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const ProfileField = ({
-  icon: Icon,
-  label,
-  value,
-  isEditing,
-  name,
-  onChange,
-  type = "text",
-  disabled = false,
-}) => (
+const ProfileField = ({ icon: Icon, label, value }) => (
   <div className="space-y-2">
     <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
       <Icon className="w-4 h-4 text-primary" />
       {label}
     </label>
-    {isEditing && !disabled ? (
-      <Input
-        type={type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        className="bg-secondary/50 border-white/10 focus:border-primary/50"
-      />
-    ) : (
-      <div className="p-3 rounded-md bg-secondary/30 border border-white/5 text-foreground font-medium min-h-[46px] flex items-center">
-        {value || <span className="text-muted-foreground italic">Not set</span>}
-      </div>
-    )}
+    <div className="p-3 rounded-md bg-secondary/30 border border-white/5 text-foreground font-medium min-h-[46px] flex items-center">
+      {value || <span className="text-muted-foreground italic">Not set</span>}
+    </div>
   </div>
 );
 
@@ -91,59 +68,11 @@ const Profile = () => {
   const { data: myListings, isLoading: isLoadingListings } = useMyListings();
   const { data: myRequests, isLoading: isLoadingRequests } = useMyRequests();
 
-  const updateProfileMutation = useUpdateProfile();
   const deleteAccountMutation = useDeleteAccount();
 
   const [activeTab, setActiveTab] = useState("info");
-  const [isEditing, setIsEditing] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phoneNumber: "",
-    department: "",
-    year: "",
-    hostel: "",
-  });
-
-  // Sync formData when profile is loaded
-  useEffect(() => {
-    if (profile) {
-      setFormData({
-        name: profile.name || "",
-        email: profile.email || "",
-        phoneNumber: profile.phoneNumber || "",
-        department: profile.department || "",
-        year: profile.year || "",
-        hostel: profile.hostel || "",
-      });
-    }
-  }, [profile]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSave = () => {
-    updateProfileMutation.mutate(
-      {
-        name: formData.name,
-        // email is usually not updatable or handled separately
-        phoneNumber: formData.phoneNumber,
-        department: formData.department,
-        year: formData.year,
-        hostel: formData.hostel,
-      },
-      {
-        onSuccess: () => {
-          setIsEditing(false);
-        },
-      },
-    );
-  };
 
   const handleDeleteAccount = () => {
     if (!deletePassword) {
@@ -262,124 +191,53 @@ const Profile = () => {
                 >
                   <div className="bg-card border border-white/10 rounded-2xl p-8 shadow-lg relative overflow-hidden h-[420px] flex flex-col">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/2" />
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
                       <h3 className="text-lg font-semibold">
                         Personal Information
                       </h3>
-                      {!isEditing ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsEditing(true)}
-                          className="border-primary/20 hover:bg-primary/10 hover:text-primary"
-                        >
-                          <Edit2 className="w-4 h-4 mr-2" />
-                          Edit Profile
-                        </Button>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setIsEditing(false);
-                              if (profile) {
-                                setFormData({
-                                  name: profile.name,
-                                  email: profile.email,
-                                  phoneNumber: profile.phoneNumber,
-                                  department: profile.department,
-                                  year: profile.year,
-                                  hostel: profile.hostel,
-                                });
-                              }
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={handleSave}
-                            disabled={updateProfileMutation.isPending}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                          >
-                            {updateProfileMutation.isPending ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <>
-                                <Save className="w-4 h-4 mr-2" /> Save Changes
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      )}
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setIsDeleteDialogOpen(true)}
+                        className="bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive font-bold border border-destructive/20"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Account
+                      </Button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-2 custom-scrollbar">
                       <ProfileField
                         icon={User}
                         label="Full Name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        isEditing={isEditing}
+                        value={profile?.name}
                       />
                       <ProfileField
                         icon={Mail}
                         label="Email Address"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        isEditing={isEditing}
-                        disabled={true}
+                        value={profile?.email}
                       />
                       <ProfileField
                         icon={Phone}
                         label="Phone Number"
-                        name="phoneNumber"
-                        value={formData.phoneNumber}
-                        onChange={handleChange}
-                        isEditing={isEditing}
-                        type="tel"
+                        value={profile?.phoneNumber}
                       />
                       <ProfileField
                         icon={BookOpen}
                         label="Department"
-                        name="department"
-                        value={formData.department}
-                        onChange={handleChange}
-                        isEditing={isEditing}
+                        value={profile?.department}
                       />
                       <ProfileField
                         icon={Calendar}
                         label="Year"
-                        name="year"
-                        value={formData.year}
-                        onChange={handleChange}
-                        isEditing={isEditing}
+                        value={formatAcademicYear(profile?.year)}
                       />
                       <ProfileField
                         icon={Home}
                         label="Hostel"
-                        name="hostel"
-                        value={formData.hostel}
-                        onChange={handleChange}
-                        isEditing={isEditing}
+                        value={profile?.hostel}
                       />
                     </div>
-
-                    {isEditing && (
-                      <div className="mt-8 pt-6 border-t border-white/10 flex justify-between items-center">
-                        <Button
-                          variant="destructive"
-                          onClick={() => setIsDeleteDialogOpen(true)}
-                          className="bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive font-bold border border-destructive/20"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete Account
-                        </Button>
-                      </div>
-                    )}
                   </div>
 
                   <AlertDialog

@@ -21,3 +21,13 @@ export function formatTimeAgo(date) {
 
   return new Date(date).toLocaleDateString();
 }
+
+export function formatAcademicYear(year) {
+  if (!year) return "";
+  const yr = parseInt(year, 10);
+  if (isNaN(yr)) return year; // fallback
+  if (yr === 1) return "1st";
+  if (yr === 2) return "2nd";
+  if (yr === 3) return "3rd";
+  return `${yr}th`;
+}

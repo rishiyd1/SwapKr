@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Filter, Package, Loader2, LogIn } from "lucide-react";
+import { Filter, Package, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useItems } from "@/hooks/useItems";
 import GuestItemCard from "@/components/products/GuestItemCard";
 import SwapkrLogo from "@/components/landing/SwapkrLogo";
 import Footer from "@/components/landing/Footer";
 import { formatTimeAgo } from "@/lib/utils";
+import SpinnerLogo from "@/components/SpinnerLogo";
 
 const CATEGORIES = [
   { id: "Hardware", label: "Hardware", icon: "⚙️" },
@@ -132,9 +133,26 @@ const Products = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex justify-center py-20"
+                className="space-y-6"
               >
-                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                <div className="flex justify-center">
+                  <SpinnerLogo size={48} text="Loading items..." />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {[...Array(4)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="rounded-2xl border border-white/5 bg-card/30 overflow-hidden animate-pulse"
+                    >
+                      <div className="h-48 bg-white/5" />
+                      <div className="p-4 space-y-3">
+                        <div className="h-4 bg-white/5 rounded w-3/4" />
+                        <div className="h-3 bg-white/5 rounded w-1/2" />
+                        <div className="h-10 bg-white/5 rounded mt-4" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </motion.div>
             ) : items?.length > 0 ? (
               <motion.div

@@ -14,13 +14,38 @@ import {
   BookOpen,
   Phone,
   Loader2,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import SwapkrLogo from "@/components/landing/SwapkrLogo";
 import { authService } from "@/services/auth.service";
-import { toast } from "sonner"; // Assuming sonner is used based on package.json
+import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"; // Add Select imports
+
+const HOSTEL_OPTIONS = [
+  "BH1",
+  "BH2",
+  "BH3",
+  "BH4",
+  "BH5",
+  "BH6",
+  "BH7",
+  "BH7E",
+  "GH1",
+  "GH2",
+  "MBH A-block",
+  "MBH B-block",
+  "MBH F-block",
+  "MGH",
+].sort();
 
 const Login = () => {
   const navigate = useNavigate();
@@ -109,6 +134,42 @@ const Login = () => {
       return;
     }
 
+    const emailMatch = email.match(
+      /^([a-z]+)\.([a-z]+)\.(\d{2,4})@nitj\.ac\.in$/i,
+    );
+    if (!emailMatch) {
+      toast.error(
+        "Please use a valid NITJ student email format (name.branch.year@nitj.ac.in)",
+      );
+      return;
+    }
+
+    const extractedDepartment = emailMatch[2].toUpperCase();
+    let admissionYearStr = emailMatch[3];
+    admissionYearStr =
+      admissionYearStr.length === 2
+        ? "20" + admissionYearStr
+        : admissionYearStr;
+    const admissionYear = parseInt(admissionYearStr, 10);
+
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth(); // 0-indexed (0 = Jan, 7 = Aug)
+
+    // Calculate years spent in college
+    // If it's August or later, they have started a new academic year
+    let yearsInCollege = currentYear - admissionYear;
+    if (currentMonth >= 7) {
+      yearsInCollege += 1;
+    }
+
+    if (yearsInCollege < 1 || yearsInCollege > 5) {
+      toast.error(
+        "Registrations are only allowed for active students (1st to 4th/5th year).",
+      );
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Register triggers OTP sending from backend
@@ -117,8 +178,8 @@ const Login = () => {
         email,
         password,
         phoneNumber,
-        department,
-        year,
+        department: extractedDepartment,
+        year: yearsInCollege,
         hostel,
       });
       toast.success("OTP sent to your email!");
@@ -155,10 +216,39 @@ const Login = () => {
     setConfirmPassword("");
     setName("");
     setHostel("");
-    setYear("");
-    setDepartment("");
     setPhoneNumber("");
   };
+
+  // --- Real-time Validation Checks for UI ---
+  const emailMatch = email.match(
+    /^([a-z]+)\.([a-z]+)\.(\d{2,4})@nitj\.ac\.in$/i,
+  );
+  const emailNamePart = emailMatch ? emailMatch[1].toLowerCase() : "";
+  const typedFirstName = name.trim().split(" ")[0].toLowerCase();
+
+  const isEmailValid = !!emailMatch;
+  const isNameValid = !!(
+    typedFirstName &&
+    emailNamePart &&
+    (emailNamePart.startsWith(typedFirstName) ||
+      typedFirstName.startsWith(emailNamePart))
+  );
+  const isPhoneValid = /^[0-9]{10}$/.test(phoneNumber);
+  const isPasswordStrong =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
+      password,
+    );
+  const passwordsMatch = password && password === confirmPassword;
+  const isHostelValid = !!hostel;
+
+  const canRequestOtp =
+    isEmailValid &&
+    isNameValid &&
+    isPhoneValid &&
+    isPasswordStrong &&
+    passwordsMatch &&
+    isHostelValid &&
+    !isLoading;
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
@@ -173,9 +263,16 @@ const Login = () => {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full opacity-[0.1] bg-primary blur-[100px] pointer-events-none" />
 
       {/* Navbar Placeholder / Logo */}
-      <nav className="p-6 relative z-10">
+      <nav className="px-15 py-6 relative z-10 flex items-center justify-between overflow-hidden">
         <Link to="/">
           <SwapkrLogo />
+        </Link>
+        <Link
+          to="/"
+          className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-white/5 transition-colors"
+          aria-label="Back to home"
+        >
+          <X className="w-5 h-5" />
         </Link>
       </nav>
 
@@ -205,12 +302,15 @@ const Login = () => {
                 </p>
 
                 <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground ml-1">
+                      Email <span className="text-red-500">*</span>
+                    </label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                       <Input
                         type="email"
-                        placeholder="rollno@nitj.ac.in"
+                        placeholder="you@nitj.ac.in"
                         className="pl-10 bg-secondary/50 border-white/5 focus:border-primary/50"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -219,7 +319,10 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground ml-1">
+                      Password <span className="text-red-500">*</span>
+                    </label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -315,99 +418,147 @@ const Login = () => {
                       onSubmit={handleSignupDetails}
                       className="space-y-4"
                     >
-                      <div className="space-y-2">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground ml-1">
+                          Full Name <span className="text-red-500">*</span>
+                        </label>
                         <div className="relative">
-                          <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                          <User
+                            className={`absolute left-3 top-3 w-4 h-4 ${name ? (isNameValid ? "text-primary" : "text-red-500") : "text-muted-foreground"}`}
+                          />
                           <Input
                             type="text"
                             placeholder="Full Name"
-                            className="pl-10 bg-secondary/50 border-white/5 focus:border-primary/50"
+                            className={`pl-10 bg-secondary/50 border-white/5 focus:border-primary/50 ${name && !isNameValid ? "border-red-500/50 focus:border-red-500/50" : ""}`}
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required
                           />
                         </div>
+                        {name && !isNameValid && emailMatch && (
+                          <p className="text-[10px] text-red-400 ml-1">
+                            First name must match email ({emailNamePart})
+                          </p>
+                        )}
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground ml-1">
+                          Email <span className="text-red-500">*</span>
+                        </label>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                          <Mail
+                            className={`absolute left-3 top-3 w-4 h-4 ${email ? (isEmailValid ? "text-primary" : "text-red-500") : "text-muted-foreground"}`}
+                          />
                           <Input
                             type="email"
-                            placeholder="rollno@nitj.ac.in"
-                            className="pl-10 bg-secondary/50 border-white/5 focus:border-primary/50"
+                            placeholder="you.br.23@nitj.ac.in"
+                            className={`pl-10 bg-secondary/50 border-white/5 focus:border-primary/50 ${email && !isEmailValid ? "border-red-500/50 focus:border-red-500/50" : ""}`}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
                           />
                         </div>
+                        {email && !isEmailValid && (
+                          <p className="text-[10px] text-red-400 ml-1">
+                            Must be format: name.branch.year@nitj.ac.in
+                          </p>
+                        )}
+                        {isEmailValid &&
+                          (() => {
+                            const extractedYr = emailMatch[3];
+                            const adYear = parseInt(
+                              extractedYr.length === 2
+                                ? "20" + extractedYr
+                                : extractedYr,
+                              10,
+                            );
+                            const d = new Date();
+                            let yrs = d.getFullYear() - adYear;
+                            if (d.getMonth() >= 7) yrs += 1;
+                            const showYr =
+                              yrs === 1
+                                ? "1st"
+                                : yrs === 2
+                                  ? "2nd"
+                                  : yrs === 3
+                                    ? "3rd"
+                                    : `${yrs}th`;
+                            return (
+                              <p className="text-[10px] text-primary/80 ml-1">
+                                Branch: {emailMatch[2].toUpperCase()}, Year:{" "}
+                                {showYr} extracted automatically
+                              </p>
+                            );
+                          })()}
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                        <div className="space-y-1 col-span-2 sm:col-span-1">
+                          <label className="text-xs font-medium text-muted-foreground ml-1">
+                            Hostel <span className="text-red-500">*</span>
+                          </label>
+                          <Select
+                            value={hostel}
+                            onValueChange={setHostel}
+                            required
+                          >
+                            <SelectTrigger className="bg-secondary/50 border-white/5 pl-3">
+                              <SelectValue placeholder="Select Hostel" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {HOSTEL_OPTIONS.map((opt) => (
+                                <SelectItem key={opt} value={opt}>
+                                  {opt}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1 col-span-2 sm:col-span-1">
+                          <label className="text-xs font-medium text-muted-foreground ml-1">
+                            Phone <span className="text-red-500">*</span>
+                          </label>
                           <div className="relative">
-                            <Home className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                            <Phone
+                              className={`absolute left-3 top-3 w-4 h-4 ${phoneNumber ? (isPhoneValid ? "text-primary" : "text-red-500") : "text-muted-foreground"}`}
+                            />
                             <Input
-                              type="text"
-                              placeholder="Hostel"
-                              className="pl-10 bg-secondary/50 border-white/5 focus:border-primary/50"
-                              value={hostel}
-                              onChange={(e) => setHostel(e.target.value)}
+                              type="tel"
+                              placeholder="10 digits"
+                              className={`pl-10 bg-secondary/50 border-white/5 focus:border-primary/50 ${phoneNumber && !isPhoneValid ? "border-red-500/50 focus:border-red-500/50" : ""}`}
+                              value={phoneNumber}
+                              onChange={(e) =>
+                                setPhoneNumber(
+                                  e.target.value
+                                    .replace(/\D/g, "")
+                                    .slice(0, 10),
+                                )
+                              }
                               required
+                              pattern="[0-9]{10}"
                             />
                           </div>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="relative">
-                            <Calendar className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                            <Input
-                              type="text"
-                              placeholder="Year"
-                              className="pl-10 bg-secondary/50 border-white/5 focus:border-primary/50"
-                              value={year}
-                              onChange={(e) => setYear(e.target.value)}
-                              required
-                            />
-                          </div>
+                          {phoneNumber && !isPhoneValid && (
+                            <p className="text-[10px] text-red-400 ml-1">
+                              Must be exactly 10 digits
+                            </p>
+                          )}
                         </div>
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground ml-1">
+                          Password <span className="text-red-500">*</span>
+                        </label>
                         <div className="relative">
-                          <BookOpen className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            type="text"
-                            placeholder="Department/Branch"
-                            className="pl-10 bg-secondary/50 border-white/5 focus:border-primary/50"
-                            value={department}
-                            onChange={(e) => setDepartment(e.target.value)}
-                            required
+                          <Lock
+                            className={`absolute left-3 top-3 w-4 h-4 ${password ? (isPasswordStrong ? "text-primary" : "text-red-500") : "text-muted-foreground"}`}
                           />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            type="tel"
-                            placeholder="Phone Number (10 digits)"
-                            className="pl-10 bg-secondary/50 border-white/5 focus:border-primary/50"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            required
-                            pattern="[0-9]{10}"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                           <Input
                             type={showPassword ? "text" : "password"}
                             placeholder="Create Password"
-                            className="pl-10 pr-10 bg-secondary/50 border-white/5 focus:border-primary/50"
+                            className={`pl-10 pr-10 bg-secondary/50 border-white/5 focus:border-primary/50 ${password && !isPasswordStrong ? "border-red-500/50 focus:border-red-500/50" : ""}`}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -424,16 +575,28 @@ const Login = () => {
                             )}
                           </button>
                         </div>
+                        {password && !isPasswordStrong && (
+                          <p className="text-[10px] text-red-400 ml-1">
+                            Min 8 chars, 1 uppercase, 1 number, 1 special
+                            character
+                          </p>
+                        )}
                       </div>
 
                       {/* Confirm Password Field */}
-                      <div className="space-y-2">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground ml-1">
+                          Confirm Password{" "}
+                          <span className="text-red-500">*</span>
+                        </label>
                         <div className="relative">
-                          <Lock className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                          <Lock
+                            className={`absolute left-3 top-3 w-4 h-4 ${confirmPassword ? (passwordsMatch ? "text-primary" : "text-red-500") : "text-muted-foreground"}`}
+                          />
                           <Input
                             type={showConfirmPassword ? "text" : "password"}
                             placeholder="Confirm Password"
-                            className="pl-10 pr-10 bg-secondary/50 border-white/5 focus:border-primary/50"
+                            className={`pl-10 pr-10 bg-secondary/50 border-white/5 focus:border-primary/50 ${confirmPassword && !passwordsMatch ? "border-red-500/50 focus:border-red-500/50" : ""}`}
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             required
@@ -452,12 +615,17 @@ const Login = () => {
                             )}
                           </button>
                         </div>
+                        {confirmPassword && !passwordsMatch && (
+                          <p className="text-[10px] text-red-400 ml-1">
+                            Passwords do not match
+                          </p>
+                        )}
                       </div>
 
                       <Button
-                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display mt-2"
+                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display mt-2 disabled:opacity-50"
                         type="submit"
-                        disabled={isLoading}
+                        disabled={!canRequestOtp}
                       >
                         {isLoading ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -567,7 +735,7 @@ const Login = () => {
                           <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                           <Input
                             type="email"
-                            placeholder="rollno@nitj.ac.in"
+                            placeholder="you@nitj.ac.in"
                             className="pl-10 bg-secondary/50 border-white/5 focus:border-primary/50"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}

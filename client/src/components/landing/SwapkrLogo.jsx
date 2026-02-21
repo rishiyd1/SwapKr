@@ -1,66 +1,70 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  return isMobile;
+};
 
 const SwapkrLogo = ({ activated = false }) => {
   const [hovered, setHovered] = useState(false);
   const expanded = hovered || activated;
+  const isMobile = useIsMobile();
 
   return (
     <div
-      className="flex items-center gap-2 cursor-pointer select-none"
+      className="flex items-center justify-start cursor-pointer select-none"
+      style={{ width: isMobile ? "auto" : "140px", marginLeft: "-8px" }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <motion.svg
-        width="32"
-        height="32"
-        viewBox="0 0 32 32"
-        fill="none"
-        className="text-primary"
-        animate={{ rotate: expanded ? 180 : 0 }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
+      <motion.div
+        className="flex items-center justify-center relative"
+        animate={{
+          x: expanded && !isMobile ? -24 : 0,
+        }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
       >
-        <path
-          d="M16 2C10 2 8 8 8 12C8 16 10 18 16 18C22 18 24 20 24 24C24 28 22 30 16 30"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          fill="none"
+        <motion.img
+          src="/swapkr.svg"
+          alt="SwapKr Logo"
+          width="32"
+          height="32"
+          className="object-contain relative z-10"
+          animate={{ rotate: expanded ? 180 : 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
         />
-        <path
-          d="M16 30C22 30 24 24 24 20C24 16 22 14 16 14C10 14 8 12 8 8C8 4 10 2 16 2"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          fill="none"
-          opacity="0.4"
-        />
-      </motion.svg>
-
-      <AnimatePresence mode="wait">
-        {expanded ? (
-          <motion.span
-            key="word"
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: "auto", opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="font-display text-lg font-bold text-primary overflow-hidden whitespace-nowrap"
-          >
-            swapkr
-          </motion.span>
-        ) : (
-          <motion.span
-            key="short"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="font-display text-lg font-bold text-primary"
-          >
-            S
-          </motion.span>
-        )}
-      </AnimatePresence>
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              className="flex items-center overflow-hidden ml-1"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: "auto", opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+            >
+              <span className="font-display text-[1.7rem] font-bold text-primary leading-none whitespace-nowrap pt-2">
+                {"wapKr".split("").map((char, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.25, delay: 0.08 + i * 0.05 }}
+                  >
+                    {char}
+                  </motion.span>
+                ))}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 };

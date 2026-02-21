@@ -53,7 +53,7 @@ const FinalCTA = () => {
         </div>
 
         {/* Main Heading */}
-        <div className="text-center -mt-8 sm:-mt-16 relative z-20">
+        <div className="text-center -mt-2 sm:-mt-16 relative z-20">
           <h2 className="font-display text-4xl sm:text-6xl md:text-7xl font-bold text-foreground tracking-tight">
             Your campus.
           </h2>
