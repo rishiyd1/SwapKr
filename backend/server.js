@@ -32,26 +32,20 @@ app.use(morgan("dev"));
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Parse comma-separated extra origins from CLIENT_URLS env var
-      const extraOrigins = process.env.CLIENT_URLS
-        ? process.env.CLIENT_URLS.split(",")
-            .map((u) => u.trim())
-            .filter(Boolean)
-        : [];
-
       const allowedOrigins = [
         "http://localhost:5173",
         "http://localhost:8081",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8081",
-        process.env.CLIENT_URL,
-        ...extraOrigins,
-      ].filter(Boolean);
+        process.env.CLIENT_URL1,
+        process.env.CLIENT_URL2,
+        process.env.CLIENT_URL3,
+      ];
 
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.indexOf(origin) !== -1 || !process.env.CLIENT_URL) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
