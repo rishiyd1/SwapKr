@@ -39,13 +39,23 @@ import { chatsService } from "@/services/chats.service";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
-const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
-  // const [searchQuery, setSearchQuery] = useState(""); // Removed local state
+const NavbarHome = ({
+  searchQuery = "",
+  onSearchChange,
+  hiddenOnMobile = false,
+}) => {
+  const [internalSearchQuery, setInternalSearchQuery] = useState(searchQuery);
   const [isFocused, setIsFocused] = useState(false);
   const [showAllNotifications, setShowAllNotifications] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Keep internal state in sync if prop changes
+    setInternalSearchQuery(searchQuery);
+  }, [searchQuery]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -134,36 +144,58 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
     : notifications.filter((n) => !n.isRead);
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center px-4 md:px-6">
+    <nav
+      className={`sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 transition-transform duration-300 ${
+        hiddenOnMobile ? "-translate-y-full" : "translate-y-0"
+      }`}
+    >
+      <div className="container flex h-16 items-center px-2 md:px-6">
         {/* Logo & Mobile Menu */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Logo */}
           <Link
             to="/home"
-            className="flex items-center space-x-2 w-32 ml-4 md:ml-8 lg:ml-12"
+            className="flex items-center space-x-2 w-auto md:w-32 ml-2 sm:ml-4 md:ml-8 lg:ml-12 shrink-0"
           >
-            <SwapkrLogo className="h-6 w-auto" />
+            <SwapkrLogo className="h-5 sm:h-6 w-auto flex-shrink-0" />
           </Link>
         </div>
 
         {/* Search Bar */}
-        <div className="flex flex-1 justify-center px-2 md:px-4 md:pl-8 h-full items-center">
+        <div className="flex flex-1 justify-center px-1 md:px-4 md:pl-8 h-full items-center min-w-0">
           <motion.div
             initial={false}
-            animate={{ maxWidth: isFocused ? "42rem" : "24rem" }}
+            animate={{ flexGrow: isFocused ? 1 : 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="relative w-full max-w-[24rem] md:max-w-none"
+            className="relative w-full max-w-[12rem] xs:max-w-[16rem] sm:max-w-[24rem] md:max-w-[42rem] min-w-0"
           >
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search items..."
+              placeholder="Search..."
               className="pl-10 bg-secondary/50 border-white/5 focus-visible:ring-accent w-full transition-all duration-300 text-sm"
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              value={searchQuery}
-              onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
+              value={internalSearchQuery}
+              onChange={(e) => {
+                const val = e.target.value;
+                setInternalSearchQuery(val);
+                if (onSearchChange) {
+                  onSearchChange(val);
+                } else {
+                  // If we are not on the home page, redirect to home page with query
+                  if (location.pathname !== "/home") {
+                    navigate(`/home?search=${encodeURIComponent(val)}`);
+                  }
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && location.pathname !== "/home") {
+                  navigate(
+                    `/home?search=${encodeURIComponent(internalSearchQuery)}`,
+                  );
+                }
+              }}
             />
           </motion.div>
         </div>
@@ -171,16 +203,16 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
         {/* Right Actions */}
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-0.5 sm:gap-2 ml-auto shrink-0">
           <Button
             variant="ghost"
             size="icon"
-            className="text-muted-foreground hover:text-foreground relative"
+            className="text-muted-foreground hover:text-foreground relative w-8 h-8 sm:w-10 sm:h-10"
             onClick={() => navigate("/chats")}
           >
-            <MessageCircle className="h-5 w-5" />
+            <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5" />
             {unreadSummary?.totalUnread > 0 && (
-              <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
+              <span className="absolute top-1 right-1 flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-red-500 text-[9px] sm:text-[10px] font-bold text-white ring-2 ring-background">
                 {unreadSummary.totalUnread > 9
                   ? "9+"
                   : unreadSummary.totalUnread}
@@ -190,17 +222,18 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
 
           {/* Notifications Dropdown */}
           <DropdownMenu
+            modal={false}
             onOpenChange={(open) => !open && setShowAllNotifications(false)}
           >
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-muted-foreground hover:text-foreground relative"
+                className="text-muted-foreground hover:text-foreground relative w-8 h-8 sm:w-10 sm:h-10"
               >
-                <Bell className="h-5 w-5" />
+                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
+                  <span className="absolute top-1 right-1 flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-red-500 text-[9px] sm:text-[10px] font-bold text-white ring-2 ring-background">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -320,14 +353,14 @@ const NavbarHome = ({ searchQuery = "", onSearchChange }) => {
           <CreateItemDialog />
 
           {/* Profile Dropdown */}
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="rounded-full ml-2 bg-secondary/50 border border-white/10"
+                className="rounded-full ml-1 sm:ml-2 bg-secondary/50 border border-white/10 w-8 h-8 sm:w-10 sm:h-10"
               >
-                <User className="h-5 w-5" />
+                <User className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent

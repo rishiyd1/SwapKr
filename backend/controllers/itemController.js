@@ -30,15 +30,15 @@ export const createItem = async (req, res) => {
     }
 
     // Validate title and description length
-    if (title.length < 10 || title.length > 60) {
+    if (title.length > 60) {
       return res
         .status(400)
-        .json({ message: "Title must be between 10 and 60 characters" });
+        .json({ message: "Title must be less than 60 characters" });
     }
 
-    if (!description || description.length < 20 || description.length > 300) {
+    if (!description || description.length > 300) {
       return res.status(400).json({
-        message: "Description must be between 20 and 300 characters",
+        message: "Description must be less than 300 characters",
       });
     }
 
@@ -52,7 +52,6 @@ export const createItem = async (req, res) => {
       sellerId,
       status: "Pending",
     });
-
 
     // Handle images from Cloudinary (req.files contains array of files with .path as URL)
     if (req.files && req.files.length > 0) {
@@ -82,7 +81,6 @@ export const getItems = async (req, res) => {
     const { search, category, minPrice, maxPrice } = req.query;
     console.log("Get Items Query:", req.query);
     const where = { status: "Available" };
-
 
     if (category) where.category = category;
 

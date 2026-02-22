@@ -55,13 +55,13 @@ const CreateRequestDialog = ({ trigger }) => {
       return;
     }
 
-    if (formData.title.length < 10 || formData.title.length > 60) {
-      toast.error("Title must be between 10 and 60 characters");
+    if (formData.title.length > 60) {
+      toast.error("Title must be less than 60 characters");
       return;
     }
 
-    if (formData.description.length < 20 || formData.description.length > 300) {
-      toast.error("Description must be between 20 and 300 characters");
+    if (formData.description.length > 300) {
+      toast.error("Description must be less than 300 characters");
       return;
     }
 
@@ -124,7 +124,7 @@ const CreateRequestDialog = ({ trigger }) => {
             </div>
             <Input
               name="title"
-              placeholder="What are you looking for? (min 10 chars)"
+              placeholder="What are you looking for?"
               value={formData.title}
               onChange={handleChange}
               maxLength={60}
@@ -165,7 +165,7 @@ const CreateRequestDialog = ({ trigger }) => {
             </div>
             <Textarea
               name="description"
-              placeholder="Describe what you need... (min 20 chars)"
+              placeholder="Describe what you need..."
               value={formData.description}
               onChange={handleChange}
               maxLength={300}

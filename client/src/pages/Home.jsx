@@ -6,6 +6,12 @@ import CreateItemDialog from "@/components/items/CreateItemDialog";
 import CreateRequestDialog from "@/components/requests/CreateRequestDialog";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Package,
   Loader2,
   Zap,
@@ -13,6 +19,7 @@ import {
   PlusCircle,
   ShoppingBag,
   Hand,
+  ChevronDown,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useItems } from "@/hooks/useItems";
@@ -36,6 +43,23 @@ const Home = () => {
     urlTab === "requests" ? "requests" : "listings",
   );
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handler = () => {
+      if (window.innerWidth < 768) {
+        setScrolled(window.scrollY > 60);
+      } else {
+        setScrolled(false);
+      }
+    };
+    window.addEventListener("scroll", handler);
+    window.addEventListener("resize", handler);
+    return () => {
+      window.removeEventListener("scroll", handler);
+      window.removeEventListener("resize", handler);
+    };
+  }, []);
 
   useEffect(() => {
     if (urlTab === "requests") {
@@ -90,48 +114,44 @@ const Home = () => {
       <NavbarHome
         searchQuery={searchQuery}
         onSearchChange={handleSearchChange}
+        hiddenOnMobile={scrolled}
       />
 
       <main className="flex-1 container px-4 pt-4 pb-8 md:px-6 mx-auto max-w-7xl">
-        {/* Categories - Connected Segmented Style */}
-        <div className="mb-6 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 scrollbar-hide">
-          <div className="flex justify-start md:justify-center min-w-max">
-            <div className="flex items-center p-1 bg-secondary/30 rounded-full border border-white/5">
-              <button
-                onClick={() => setSelectedCategory("All")}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                  selectedCategory === "All"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                }`}
-              >
-                <Package className="w-4 h-4" />
-                All
-              </button>
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 ${
-                    selectedCategory === cat.id
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                  }`}
-                >
-                  <span>{cat.icon}</span>
-                  {cat.label}
-                </button>
-              ))}
-            </div>
+        {/* Mobile Action Buttons (Visible only on mobile, below navbar) */}
+        <div className="sm:hidden w-full h-10 mb-6 relative z-40">
+          <div
+            className={`flex gap-3 w-full transition-all duration-300 ${
+              scrolled
+                ? "fixed top-0 left-0 right-0 px-4 py-3 bg-background/90 backdrop-blur-xl shadow-sm border-b border-white/10"
+                : "absolute top-0 left-0 right-0"
+            }`}
+          >
+            <CreateRequestDialog
+              trigger={
+                <Button className="flex-1 bg-secondary/50 hover:bg-secondary border border-dashed border-primary/30 text-primary font-display gap-2 h-10 shadow-none">
+                  <Hand className="h-4 w-4" /> Make Request
+                </Button>
+              }
+            />
+            <CreateItemDialog
+              trigger={
+                <Button className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground font-display gap-2 h-10 shadow-none">
+                  <PlusCircle className="h-4 w-4" /> Sell Item
+                </Button>
+              }
+            />
           </div>
         </div>
+
+        {/* Categories section was unified into the Showing dropdown */}
 
         {/* Tabs Header - Compact Segmented Control */}
         <div className="flex items-center justify-center mb-8">
           <div className="flex p-1 bg-secondary/30 rounded-full border border-white/5 relative">
             <button
               onClick={() => handleTabChange("listings")}
-              className={`px-8 py-2.5 rounded-full text-sm font-display font-medium transition-all duration-300 relative z-10 ${
+              className={`px-6 md:px-8 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-display font-medium transition-all duration-300 relative z-10 ${
                 activeTab === "listings"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -141,7 +161,7 @@ const Home = () => {
             </button>
             <button
               onClick={() => handleTabChange("requests")}
-              className={`px-8 py-2.5 rounded-full text-sm font-display font-medium transition-all duration-300 relative z-10 ${
+              className={`px-6 md:px-8 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-display font-medium transition-all duration-300 relative z-10 ${
                 activeTab === "requests"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -163,10 +183,34 @@ const Home = () => {
             >
               {/* Listings Grid */}
               <div>
-                <h2 className="text-xl font-display font-semibold mb-6 flex items-center gap-2 text-muted-foreground">
-                  Showing:{" "}
-                  <span className="text-foreground">{selectedCategory}</span>
-                </h2>
+                <div className="flex items-center gap-2 mb-6 text-sm md:text-base text-muted-foreground font-body">
+                  <span>Showing:</span>
+                  <div>
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger className="flex items-center gap-1 w-auto border-none bg-transparent shadow-none p-0 h-auto text-sm md:text-base text-foreground font-semibold focus:outline-none focus:ring-0 [&>svg]:ml-1 data-[state=open]:text-primary transition-colors hover:text-primary">
+                        {selectedCategory}
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-background/95 backdrop-blur-xl border-white/10 min-w-[8rem] z-50">
+                        <DropdownMenuItem
+                          onClick={() => setSelectedCategory("All")}
+                          className="py-2 cursor-pointer hover:bg-white/5 focus:bg-white/5 focus:text-foreground"
+                        >
+                          All
+                        </DropdownMenuItem>
+                        {CATEGORIES.map((cat) => (
+                          <DropdownMenuItem
+                            key={cat.id}
+                            onClick={() => setSelectedCategory(cat.id)}
+                            className="py-2 cursor-pointer hover:bg-white/5 focus:bg-white/5 focus:text-foreground"
+                          >
+                            {cat.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
 
                 {isLoadingItems ? (
                   <div className="flex justify-center py-20">
@@ -225,19 +269,41 @@ const Home = () => {
             >
               <div className="flex justify-between items-end">
                 <div>
-                  <h2 className="text-3xl font-display font-bold mb-2">
+                  <h2 className="text-2xl md:text-3xl font-display font-bold mb-2">
                     Item Requests
                   </h2>
-                  <p className="text-muted-foreground max-w-xl">
+                  <p className="text-sm md:text-base text-muted-foreground max-w-xl">
                     Browse what others are looking for or make your own request
                     to find items you need on campus.
                   </p>
                 </div>
-                <div className="hidden md:block text-sm text-muted-foreground">
-                  Showing:{" "}
-                  <span className="text-foreground font-medium">
-                    {selectedCategory}
-                  </span>
+                <div className="flex items-center gap-2 text-sm md:text-base text-muted-foreground">
+                  <span>Showing:</span>
+                  <div>
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger className="flex items-center gap-1 w-auto border-none bg-transparent shadow-none p-0 h-auto text-sm md:text-base font-semibold text-foreground focus:outline-none focus:ring-0 [&>svg]:ml-1 data-[state=open]:text-primary transition-colors hover:text-primary">
+                        {selectedCategory}
+                        <ChevronDown className="h-4 w-4 opacity-50" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-background/95 backdrop-blur-xl border-white/10 min-w-[8rem] z-50">
+                        <DropdownMenuItem
+                          onClick={() => setSelectedCategory("All")}
+                          className="py-2 cursor-pointer hover:bg-white/5 focus:bg-white/5 focus:text-foreground"
+                        >
+                          All
+                        </DropdownMenuItem>
+                        {CATEGORIES.map((cat) => (
+                          <DropdownMenuItem
+                            key={cat.id}
+                            onClick={() => setSelectedCategory(cat.id)}
+                            className="py-2 cursor-pointer hover:bg-white/5 focus:bg-white/5 focus:text-foreground"
+                          >
+                            {cat.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </div>
 
@@ -308,46 +374,6 @@ const Home = () => {
           )}
         </AnimatePresence>
       </main>
-
-      {/* Mobile Floating Action Buttons */}
-      <div className="fixed bottom-6 right-5 z-50 flex flex-row items-center gap-3 md:hidden">
-        <CreateRequestDialog
-          trigger={
-            <motion.button
-              initial={{ opacity: 0, scale: 0.5, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{
-                delay: 0.1,
-                type: "spring",
-                stiffness: 300,
-                damping: 20,
-              }}
-              className="w-12 h-12 rounded-full bg-secondary/90 border border-primary/30 text-primary shadow-lg shadow-primary/10 backdrop-blur-md flex items-center justify-center hover:bg-secondary active:scale-95 transition-all"
-              title="Make a Request"
-            >
-              <Hand className="h-5 w-5" />
-            </motion.button>
-          }
-        />
-        <CreateItemDialog
-          trigger={
-            <motion.button
-              initial={{ opacity: 0, scale: 0.5, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{
-                delay: 0.2,
-                type: "spring",
-                stiffness: 300,
-                damping: 20,
-              }}
-              className="w-12 h-12 rounded-full bg-accent text-accent-foreground shadow-xl shadow-accent/30 flex items-center justify-center hover:bg-accent/90 active:scale-95 transition-all"
-              title="Sell Item"
-            >
-              <PlusCircle className="h-5 w-5" />
-            </motion.button>
-          }
-        />
-      </div>
 
       <Footer />
     </div>

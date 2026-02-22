@@ -14,13 +14,22 @@ const useIsMobile = () => {
 
 const SwapkrLogo = ({ activated = false }) => {
   const [hovered, setHovered] = useState(false);
-  const expanded = hovered || activated;
+  const [initialActive, setInitialActive] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitialActive(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const expanded = hovered || activated || initialActive;
   const isMobile = useIsMobile();
 
   return (
     <div
       className="flex items-center justify-start cursor-pointer select-none"
-      style={{ width: isMobile ? "auto" : "140px", marginLeft: "-8px" }}
+      style={{ width: isMobile ? "auto" : "140px" }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
