@@ -6,28 +6,25 @@ export const initSocket = (server) => {
   const io = new Server(server, {
     cors: {
       origin: (origin, callback) => {
-        // Parse comma-separated extra origins from CLIENT_URLS env var
-        const extraOrigins = process.env.CLIENT_URLS
-          ? process.env.CLIENT_URLS.split(",")
-              .map((u) => u.trim())
-              .filter(Boolean)
-          : [];
-
         const allowedOrigins = [
-          process.env.CLIENT_URL,
           "http://localhost:8080",
           "http://127.0.0.1:8080",
           "http://localhost:5173",
           "http://127.0.0.1:5173",
           "http://localhost:8081",
           "http://127.0.0.1:8081",
-          ...extraOrigins,
+          process.env.CLIENT_URL1,
+          process.env.CLIENT_URL2,
+          process.env.CLIENT_URL3,
         ].filter(Boolean);
 
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
-        if (allowedOrigins.includes(origin)) {
+        if (
+          allowedOrigins.indexOf(origin) !== -1 ||
+          origin.endsWith(".vercel.app")
+        ) {
           callback(null, true);
         } else {
           callback(new Error("Not allowed by CORS"));
