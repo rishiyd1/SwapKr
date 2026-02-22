@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
-import { Github, Linkedin, Twitter, Send, Loader2 } from "lucide-react";
+import { Github, Linkedin, Instagram, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
 import { authService } from "@/services/auth.service";
@@ -8,32 +8,52 @@ import { toast } from "sonner";
 
 const founders = [
   {
-    name: "Kushagar",
+    name: "Ashish",
     role: "Co-Founder",
-    message: "Papa hun mai papa, sari duniya ka papa",
-    avatar: "🧑‍💻",
+    message: "Obsessed with building things that matter.",
+    image: "/ashish.jpeg",
     color: "bg-primary/20",
+    links: {
+      github: "https://github.com/ashishgautam484",
+      linkedin: "https://www.linkedin.com/in/ashish-gautam-58925b2b2/",
+      instagram: "https://www.instagram.com/ashish.gautam_",
+    },
   },
   {
     name: "Rishi",
     role: "Co-Founder",
-    message: "Vedu ne mere kaam kharab kar diye h",
-    avatar: "🎨",
+    message: "Always building. Always learning.",
+    image: "/rishi.jpeg",
     color: "bg-accent/20",
+    links: {
+      github: "https://github.com/rishiyd1",
+      linkedin: "https://www.linkedin.com/in/rishiy05/",
+      instagram: "https://www.instagram.com/ris_hi_.05",
+    },
   },
   {
-    name: "Ashish",
+    name: "Kushagar",
     role: "Co-Founder",
-    message: "mera bhot tej sar dukh rha h",
-    avatar: "🚀",
+    message: "Ideas are easy. Execution is everything.",
+    image: "/kushagar.jpeg",
     color: "bg-primary/20",
+    links: {
+      github: "https://github.com/kush-8",
+      linkedin: "https://www.linkedin.com/in/kushagar-sharma-b7a82b288/",
+      instagram: "https://www.instagram.com/kushagar_08",
+    },
   },
   {
-    name: "Vedu",
-    role: "Unpaid intern",
-    message: "asogoarngojanijognoadsddsn",
-    avatar: "🧠",
+    name: "Vedansh",
+    role: "Co-founder",
+    message: "Quiet focus. Loud results.",
+    image: "/vedansh.jpeg",
     color: "bg-accent/20",
+    links: {
+      github: "https://github.com/Vedansh-017",
+      linkedin: "https://www.linkedin.com/in/vedansh-mamodiya-74880229a",
+      instagram: "https://www.instagram.com/vedansh._017",
+    },
   },
 ];
 
@@ -98,7 +118,7 @@ const FounderCard = ({
 
       {/* Holographic sweep */}
       <motion.div
-        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
         style={{
           background:
             "linear-gradient(45deg, transparent 30%, hsl(42 100% 62% / 0.04) 50%, transparent 70%)",
@@ -106,9 +126,13 @@ const FounderCard = ({
       />
 
       <div
-        className={`w-16 h-16 rounded-full ${founder.color} flex items-center justify-center text-3xl mx-auto mb-3 relative`}
+        className={`w-16 h-16 rounded-full ${founder.color} flex items-center justify-center text-3xl mx-auto mb-3 relative overflow-hidden`}
       >
-        {founder.avatar}
+        <img
+          src={founder.image}
+          alt={founder.name}
+          className="w-full h-full object-cover"
+        />
         {/* Subtle pulse ring */}
         <motion.div
           className={`absolute inset-0 rounded-full border ${index % 2 === 0 ? "border-primary/20" : "border-accent/20"}`}
@@ -124,10 +148,28 @@ const FounderCard = ({
         {displayText}
         {isHovered && <span className="animate-pulse">_</span>}
       </p>
-      <div className="flex justify-center gap-3 mt-4">
-        <Github className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
-        <Linkedin className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
-        <Twitter className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
+      <div className="flex justify-center gap-3 mt-4 relative z-20">
+        <a
+          href={founder.links?.github || "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Github className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
+        </a>
+        <a
+          href={founder.links?.linkedin || "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Linkedin className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
+        </a>
+        <a
+          href={founder.links?.instagram || "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Instagram className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors cursor-pointer" />
+        </a>
       </div>
     </motion.div>
   );

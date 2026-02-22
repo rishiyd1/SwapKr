@@ -234,10 +234,7 @@ const Login = () => {
       typedFirstName.startsWith(emailNamePart))
   );
   const isPhoneValid = /^[0-9]{10}$/.test(phoneNumber);
-  const isPasswordStrong =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
-      password,
-    );
+  const isPasswordStrong = password.length >= 8;
   const passwordsMatch = password && password === confirmPassword;
   const isHostelValid = !!hostel;
 
@@ -577,8 +574,7 @@ const Login = () => {
                         </div>
                         {password && !isPasswordStrong && (
                           <p className="text-[10px] text-red-400 ml-1">
-                            Min 8 chars, 1 uppercase, 1 number, 1 special
-                            character
+                            Password must be at least 8 characters long
                           </p>
                         )}
                       </div>

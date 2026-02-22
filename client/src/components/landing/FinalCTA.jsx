@@ -47,7 +47,7 @@ const FinalCTA = () => {
 
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full text-center">
             <p className="font-mono text-accent text-sm sm:text-base tracking-[0.2em] uppercase mb-4">
-              Early Access &middot; NITJ Only
+              NITJ Exclusive
             </p>
           </div>
         </div>
@@ -62,10 +62,8 @@ const FinalCTA = () => {
           </h2>
         </div>
 
-        {/* Subtext */}
         <p className="text-muted-foreground mt-8 text-center max-w-lg text-sm sm:text-base px-4">
-          Rolling out to NITJ batches soon. Join the waitlist and get early
-          access before anyone else.
+          Join the exclusive marketplace for NIT Jalandhar students today.
         </p>
 
         {/* Input Form */}
@@ -88,23 +86,7 @@ const FinalCTA = () => {
         </div>
 
         <p className="text-muted-foreground/30 text-xs mt-6 font-mono tracking-widest uppercase">
-          No spam. Just early access.
-        </p>
-      </div>
-
-      {/* Footer Bar */}
-      <div className="w-full border-t border-white/5 py-6 px-6 sm:px-12 flex flex-col sm:flex-row justify-between items-center gap-4 relative z-20 bg-background/50 backdrop-blur-sm">
-        <div className="flex items-center gap-2 text-muted-foreground/60 text-xs font-mono tracking-widest uppercase">
-          <div className="w-6 h-6 rounded-full border border-white/10 flex items-center justify-center">
-            <ArrowRight className="w-3 h-3" />
-          </div>
-          <span>SwapKr</span>
-          <span className="text-white/10">&bull;</span>
-          <span>Built at NITJ</span>
-        </div>
-
-        <p className="text-muted-foreground/40 text-xs font-mono">
-          &copy; 2025
+          No spam. Just students.
         </p>
       </div>
     </section>

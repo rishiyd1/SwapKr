@@ -93,13 +93,13 @@ const CreateItemDialog = ({ trigger }) => {
       return;
     }
 
-    if (formData.title.length < 10 || formData.title.length > 60) {
-      toast.error("Title must be between 10 and 60 characters");
+    if (formData.title.length > 60) {
+      toast.error("Title must be less than 60 characters");
       return;
     }
 
-    if (formData.description.length < 20 || formData.description.length > 300) {
-      toast.error("Description must be between 20 and 300 characters");
+    if (formData.description.length > 300) {
+      toast.error("Description must be less than 300 characters");
       return;
     }
 
@@ -175,7 +175,7 @@ const CreateItemDialog = ({ trigger }) => {
             </div>
             <Input
               name="title"
-              placeholder="Item name (min 10 chars)"
+              placeholder="Item name"
               value={formData.title}
               onChange={handleChange}
               maxLength={60}
@@ -253,7 +253,7 @@ const CreateItemDialog = ({ trigger }) => {
             </div>
             <Textarea
               name="description"
-              placeholder="Describe your item... (min 20 chars)"
+              placeholder="Describe your item..."
               value={formData.description}
               onChange={handleChange}
               maxLength={300}

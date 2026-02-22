@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Search, MessageSquare, Clock } from "lucide-react";
+import { Search, MessageSquare, Clock, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { formatTimeAgo } from "@/lib/utils";
 
 const ChatSidebar = ({
@@ -11,6 +12,7 @@ const ChatSidebar = ({
   onSelectRequest,
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
   const filteredRequests = requests.filter((r) => {
     if (!searchQuery) return true;
@@ -31,7 +33,15 @@ const ChatSidebar = ({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="p-4 border-b border-white/5">
-        <h2 className="text-lg font-display font-bold mb-4">Messages</h2>
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="md:hidden p-2 -ml-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-white/5 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h2 className="text-lg font-display font-bold">Messages</h2>
+        </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input

@@ -17,6 +17,7 @@ import {
   Clock,
   Trash2,
   AlertTriangle,
+  Info,
 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { useItems, useMyListings } from "@/hooks/useItems";
@@ -41,6 +42,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const ProfileField = ({ icon: Icon, label, value }) => (
   <div className="space-y-2">
@@ -103,14 +110,16 @@ const Profile = () => {
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back to Home
           </Link>
-          <h1 className="text-3xl font-display font-bold">My Profile</h1>
+          <h1 className="text-2xl md:text-3xl font-display font-bold">
+            My Profile
+          </h1>
           <p className="text-muted-foreground mt-1">
             Manage your personal information and account settings
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex bg-secondary/30 p-1 rounded-xl mb-8 w-fit">
+        <div className="flex bg-secondary/30 p-1 rounded-xl mb-8 w-fit max-w-full overflow-x-auto">
           <button
             onClick={() => setActiveTab("info")}
             className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -148,25 +157,49 @@ const Profile = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="md:col-span-1"
+            className={`md:col-span-1 ${activeTab !== "info" ? "hidden md:block" : ""}`}
           >
-            <div className="bg-card border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center shadow-lg h-[420px] justify-center">
-              <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center mb-6 ring-4 ring-background shadow-inner shrink-0">
-                <User className="w-16 h-16 text-primary" />
+            <div className="bg-card border border-white/10 rounded-2xl p-6 flex flex-col items-center text-center shadow-lg h-auto md:h-[420px] justify-center">
+              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-primary/10 flex items-center justify-center mb-4 md:mb-6 ring-4 ring-background shadow-inner shrink-0">
+                <User className="w-12 h-12 md:w-16 md:h-16 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 mb-2">
+              <h2 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 mb-2">
                 {profile?.name}
               </h2>
-              <p className="text-sm text-muted-foreground mb-8">
+              <p className="text-sm text-muted-foreground mb-6 md:mb-8">
                 {profile?.email}
               </p>
 
-              <div className="mt-auto w-full p-4 bg-accent/10 rounded-xl border border-accent/20 flex flex-col items-center">
-                <span className="text-xs text-muted-foreground uppercase tracking-widest mb-2">
-                  Tokens Available
-                </span>
-                <div className="flex items-center gap-2 text-3xl font-bold text-accent-foreground">
-                  <Coins className="w-8 h-8" />
+              <div className="mt-4 md:mt-auto w-full p-4 bg-accent/10 rounded-xl border border-accent/20 flex flex-col items-center">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <span className="text-xs text-muted-foreground uppercase tracking-widest">
+                    Tokens Available
+                  </span>
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="hover:bg-transparent focus:outline-none p-1 -m-1"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                        >
+                          <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p className="max-w-[200px] text-xs">
+                          Tokens are used to make Urgent Requests which are
+                          emailed to all users.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <div className="flex items-center gap-2 text-2xl md:text-3xl font-bold text-accent-foreground">
+                  <Coins className="w-6 h-6 md:w-8 md:h-8" />
                   {profile?.tokens || 0}
                 </div>
               </div>
@@ -189,10 +222,10 @@ const Profile = () => {
                   exit={{ opacity: 0, x: -10 }}
                   className="space-y-6"
                 >
-                  <div className="bg-card border border-white/10 rounded-2xl p-8 shadow-lg relative overflow-hidden h-[420px] flex flex-col">
+                  <div className="bg-card border border-white/10 rounded-2xl p-6 md:p-8 shadow-lg relative overflow-hidden min-h-[420px] md:h-[420px] flex flex-col">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/2" />
                     <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
-                      <h3 className="text-lg font-semibold">
+                      <h3 className="text-base md:text-lg font-semibold">
                         Personal Information
                       </h3>
                       <Button
@@ -310,9 +343,9 @@ const Profile = () => {
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
-                  className="bg-card border border-white/10 rounded-2xl p-8 shadow-lg h-[420px] flex flex-col"
+                  className="bg-card border border-white/10 rounded-2xl p-6 md:p-8 shadow-lg min-h-[420px] md:h-[420px] flex flex-col"
                 >
-                  <h3 className="text-lg font-semibold mb-6 shrink-0">
+                  <h3 className="text-base md:text-lg font-semibold mb-6 shrink-0">
                     My Item Listings
                   </h3>
 
@@ -397,9 +430,9 @@ const Profile = () => {
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
-                  className="bg-card border border-white/10 rounded-2xl p-8 shadow-lg h-[420px] flex flex-col"
+                  className="bg-card border border-white/10 rounded-2xl p-6 md:p-8 shadow-lg min-h-[420px] md:h-[420px] flex flex-col"
                 >
-                  <h3 className="text-lg font-semibold mb-6 text-foreground shrink-0">
+                  <h3 className="text-base md:text-lg font-semibold mb-6 text-foreground shrink-0">
                     My Item Requests
                   </h3>
 

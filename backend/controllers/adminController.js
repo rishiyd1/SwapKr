@@ -109,6 +109,27 @@ export const approveRequest = async (req, res) => {
     const updatedRequest = await Request.update(req.params.id, {
       status: "Open",
     });
+
+    // ── NOTIFICATIONS ──
+    // Send app notification to all users when a normal request is approved
+    try {
+      if (updatedRequest) {
+        // Need Notification model imported securely
+        const { Notification } = await import("../models/index.js");
+        await Notification.createBatchForRequest({
+          type: "Request",
+          content: `New Request: ${updatedRequest.title}`,
+          relatedId: updatedRequest.id,
+          excludedUserId: updatedRequest.requesterId,
+        });
+      }
+    } catch (notifError) {
+      console.error(
+        "[Admin] Notification error on approveRequest:",
+        notifError.message,
+      );
+    }
+
     res.status(200).json({
       message: "Request approved successfully",
       request: updatedRequest,

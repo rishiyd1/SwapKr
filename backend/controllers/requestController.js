@@ -19,8 +19,8 @@ const validateRequestInput = (title, description, type) => {
   if (!title || typeof title !== "string" || title.trim().length === 0) {
     errors.push("Title is required");
   }
-  if (title && (title.length < 10 || title.length > 60)) {
-    errors.push("Title must be between 10 and 60 characters");
+  if (title && title.length > 60) {
+    errors.push("Title must be less than 60 characters");
   }
   if (
     !description ||
@@ -29,8 +29,8 @@ const validateRequestInput = (title, description, type) => {
   ) {
     errors.push("Description is required");
   }
-  if (description && (description.length < 20 || description.length > 300)) {
-    errors.push("Description must be between 20 and 300 characters");
+  if (description && description.length > 300) {
+    errors.push("Description must be less than 300 characters");
   }
   if (type && !["Urgent", "Normal"].includes(type)) {
     errors.push("Type must be 'Urgent' or 'Normal'");
@@ -122,16 +122,22 @@ export const createRequest = async (req, res) => {
     // ── NOTIFICATIONS ──
 
     // 1. Create App Notifications (Persistent) for ALL users
-    try {
-      await Notification.createBatchForRequest({
-        type: "Request",
-        content: `New ${type === "Urgent" ? "Urgent " : ""}Request: ${safeTitle}`,
-        relatedId: newRequest.id,
-        excludedUserId: requesterId,
-      });
-    } catch (notifError) {
-      console.error("[createRequest] Notification error:", notifError.message);
-      // Don't fail the request if notifications fail
+    // Normal requests send notifications upon Admin Approval, Urgent sends immediately
+    if (type === "Urgent") {
+      try {
+        await Notification.createBatchForRequest({
+          type: "Request",
+          content: `New Urgent Request: ${safeTitle}`,
+          relatedId: newRequest.id,
+          excludedUserId: requesterId,
+        });
+      } catch (notifError) {
+        console.error(
+          "[createRequest] Notification error:",
+          notifError.message,
+        );
+        // Don't fail the request if notifications fail
+      }
     }
 
     // 2. Enqueue Email Job for URGENT requests
