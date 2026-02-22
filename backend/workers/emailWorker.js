@@ -86,9 +86,9 @@ const BATCH_DELAY_MS = parseInt(process.env.EMAIL_BATCH_DELAY_MS) || 1000;
 const ensureBroadcastLogsTable = async () => {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS broadcast_logs (
-      id SERIAL PRIMARY KEY,
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       job_id VARCHAR(255) UNIQUE NOT NULL,
-      request_id INTEGER,
+      request_id UUID,
       status VARCHAR(20) DEFAULT 'pending'
         CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'retrying')),
       attempt INTEGER DEFAULT 1,
@@ -177,21 +177,21 @@ const processEmailJob = async (job) => {
   });
 
   let emailsSent = 0;
-  let lastId = 0; // Cursor-based pagination — avoids OFFSET performance issues
+  let offset = 0; // OFFSET-based pagination (UUIDs don't support cursor-based id > N)
 
   // ── Cursor-Based Batch Processing ──
   while (true) {
-    // Fetch next batch using cursor (WHERE id > lastId)
+    // Fetch next batch using OFFSET pagination
     const usersResult = await pool.query(
-      'SELECT id, email, name FROM users WHERE id != $1 AND email IS NOT NULL AND "isVerified" = true AND id > $2 ORDER BY id ASC LIMIT $3',
-      [requesterId, lastId, BATCH_SIZE],
+      'SELECT id, email, name FROM users WHERE id != $1 AND email IS NOT NULL AND "isVerified" = true ORDER BY "createdAt" ASC LIMIT $2 OFFSET $3',
+      [requesterId, BATCH_SIZE, offset],
     );
 
     const users = usersResult.rows;
     if (users.length === 0) break;
 
-    // Update cursor to last user ID in this batch
-    lastId = users[users.length - 1].id;
+    // Advance the offset for the next batch
+    offset += users.length;
 
     const bccEmails = users.map((u) => u.email);
 
@@ -295,7 +295,7 @@ const processEmailJob = async (job) => {
         batchCount: users.length,
         emailsSent,
         totalRecipients,
-        cursor: lastId,
+        offset,
       });
 
       // Update progress in DB
@@ -311,7 +311,7 @@ const processEmailJob = async (job) => {
     } catch (error) {
       log.error("Batch send failed", {
         jobId,
-        cursor: lastId,
+        offset,
         attempt,
         error: error.message,
       });
@@ -321,7 +321,7 @@ const processEmailJob = async (job) => {
         .query(
           "UPDATE broadcast_logs SET status = 'retrying', error = $1, emails_sent = $2 WHERE job_id = $3",
           [
-            `Batch failed at cursor ${lastId}: ${error.message}`,
+            `Batch failed at offset ${offset}: ${error.message}`,
             emailsSent,
             jobId,
           ],

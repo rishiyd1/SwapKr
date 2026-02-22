@@ -158,14 +158,14 @@ export const sendMessage = async (req, res) => {
 
     // Create message
     const message = await Message.create({
-      chatId: parseInt(chatId),
+      chatId: chatId,
       itemId: chat.itemId,
       senderId,
       content,
     });
 
     // Update chat's lastMessageAt
-    await Chat.update(parseInt(chatId), { lastMessageAt: new Date() });
+    await Chat.update(chatId, { lastMessageAt: new Date() });
 
     // Fetch with sender info
     const fullMessage = await Message.findByIdWithSender(message.id);
@@ -211,15 +211,15 @@ export const getUnreadSummary = async (req, res) => {
     // 1. Count unread messages
     const messageResult = await pool.query(
       `SELECT COUNT(*)::integer FROM messages 
-       WHERE "senderId" != $1::integer AND "isRead" = false
-       AND "chatId" IN (SELECT id FROM chats WHERE "buyerId" = $1::integer OR "sellerId" = $1::integer)`,
+       WHERE "senderId" != $1 AND "isRead" = false
+       AND "chatId" IN (SELECT id FROM chats WHERE "buyerId" = $1 OR "sellerId" = $1)`,
       [userId],
     );
 
     // 2. Count pending buy requests (for me as seller)
     const requestResult = await pool.query(
       `SELECT COUNT(*)::integer FROM buy_requests 
-       WHERE "sellerId" = $1::integer AND status = 'Pending'`,
+       WHERE "sellerId" = $1 AND status = 'Pending'`,
       [userId],
     );
 

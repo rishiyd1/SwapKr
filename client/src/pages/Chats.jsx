@@ -35,7 +35,7 @@ const Chats = () => {
   const chats = useMemo(
     () =>
       (rawChats || []).map((chat) => {
-        const isBuyer = parseInt(chat.buyerId) === parseInt(currentUser?.id);
+        const isBuyer = chat.buyerId === currentUser?.id;
         const otherUser = isBuyer ? chat.seller : chat.buyer;
         return {
           ...chat,
@@ -90,9 +90,7 @@ const Chats = () => {
 
     // Case 1: URL says we want a specific chat
     if (initialChatId) {
-      const chat = chats.find(
-        (c) => parseInt(c.id) === parseInt(initialChatId),
-      );
+      const chat = chats.find((c) => c.id === initialChatId);
       if (chat) {
         if (selectedChat?.id !== chat.id) {
           setSelectedChat(chat);
@@ -104,7 +102,7 @@ const Chats = () => {
 
     // Case 2: URL says we are starting a new chat (draft)
     if (newChatWithId) {
-      const draftId = parseInt(newChatWithId);
+      const draftId = newChatWithId;
       if (selectedChat?.otherUser?.id !== draftId || !selectedChat.isDraft) {
         if (requestId && targetRequest) {
           setSelectedChat({
@@ -117,14 +115,14 @@ const Chats = () => {
               title: targetRequest.title,
               price: targetRequest.budget ? `₹${targetRequest.budget}` : null,
             },
-            requestId: parseInt(requestId),
+            requestId: requestId,
           });
         } else {
           setSelectedChat({
             isDraft: true,
             otherUser: { id: draftId, name: "Loading..." },
             item: { title: "Providing requested item" },
-            requestId: requestId ? parseInt(requestId) : null,
+            requestId: requestId || null,
           });
         }
         setSelectedRequest(null);
@@ -157,23 +155,21 @@ const Chats = () => {
       if (
         selectedChat &&
         !selectedChat.isDraft &&
-        selectedChat.requestId === parseInt(requestId)
+        selectedChat.requestId === requestId
       ) {
         return;
       }
 
-      const request = incomingRequests.find(
-        (r) => parseInt(r.id) === parseInt(requestId),
-      );
+      const request = incomingRequests.find((r) => r.id === requestId);
 
       if (request) {
         // Logic for Incoming Requests (I am the Seller/Provider receiving a request)
         if (request.status === "Accepted") {
           const matchingChat = chats.find(
             (c) =>
-              parseInt(c.buyerId) === parseInt(request.buyerId) &&
-              parseInt(c.sellerId) === parseInt(request.sellerId) &&
-              parseInt(c.itemId) === parseInt(request.itemId),
+              c.buyerId === request.buyerId &&
+              c.sellerId === request.sellerId &&
+              c.itemId === request.itemId,
           );
           if (matchingChat) {
             if (selectedChat?.id !== matchingChat.id) {
@@ -206,7 +202,7 @@ const Chats = () => {
             title: targetRequest.title,
             price: targetRequest.budget ? `₹${targetRequest.budget}` : null,
           },
-          requestId: parseInt(requestId),
+          requestId: requestId,
         });
         setSelectedRequest(null);
       }

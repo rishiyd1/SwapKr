@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { authService } from "@/services/auth.service";
 import { SocketContext } from "./SocketContext";
+import { toast } from "sonner";
 
-const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || window.location.origin;
 
 export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
@@ -28,17 +29,41 @@ export const SocketProvider = ({ children }) => {
     const newSocket = io(SOCKET_URL, {
       withCredentials: true,
       transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
     });
 
     newSocket.userId = user.id;
+    let wasConnected = false;
 
     newSocket.on("connect", () => {
       setIsConnected(true);
       newSocket.emit("register", user.id);
+      if (wasConnected) {
+        toast.success("Back online! 🟢", { duration: 2000 });
+      }
+      wasConnected = true;
     });
 
-    newSocket.on("disconnect", () => {
+    newSocket.on("disconnect", (reason) => {
       setIsConnected(false);
+      if (reason !== "io client disconnect") {
+        toast.error("Connection lost. Reconnecting...", {
+          duration: 3000,
+          id: "socket-disconnect",
+        });
+      }
+    });
+
+    newSocket.on("reconnect_attempt", (attempt) => {
+      if (attempt % 5 === 0) {
+        toast.loading(`Reconnecting... (attempt ${attempt})`, {
+          id: "socket-reconnect",
+          duration: 3000,
+        });
+      }
     });
 
     newSocket.on("user_online", (userId) => {

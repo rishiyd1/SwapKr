@@ -13,7 +13,7 @@ const Item = {
   }) {
     const result = await pool.query(
       `INSERT INTO items (title, description, price, category, condition, "pickupLocation", "sellerId", status, "createdAt", "updatedAt")
-             VALUES ($1, $2, $3::numeric, $4, $5, $6, $7::integer, $8, NOW(), NOW())
+             VALUES ($1, $2, $3::numeric, $4, $5, $6, $7, $8, NOW(), NOW())
              RETURNING *`,
       [
         title,
@@ -171,6 +171,21 @@ const Item = {
 
   async destroy(id) {
     await pool.query("DELETE FROM items WHERE id = $1", [id]);
+  },
+
+  async findAllPending() {
+    const result = await pool.query(
+      `SELECT i.*,
+              json_build_object('id', s.id, 'name', s.name, 'email', s.email, 'hostel', s.hostel, 'phoneNumber', s."phoneNumber") AS seller,
+              COALESCE(json_agg(json_build_object('id', img.id, 'itemId', img."itemId", 'imageUrl', img."imageUrl")) FILTER (WHERE img.id IS NOT NULL), '[]') AS images
+       FROM items i
+       LEFT JOIN users s ON i."sellerId" = s.id
+       LEFT JOIN item_images img ON img."itemId" = i.id
+       WHERE i.status = 'Pending'
+       GROUP BY i.id, s.id, s.name, s.email, s.hostel, s."phoneNumber"
+       ORDER BY i."createdAt" DESC`,
+    );
+    return result.rows;
   },
 };
 

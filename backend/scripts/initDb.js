@@ -71,10 +71,13 @@ const createTables = async () => {
     await client.connect();
     console.log(`Connected to database. Creating tables...`);
 
+    // Ensure pgcrypto extension exists for UUID generation
+    await client.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`);
+
     // Create ENUM types (safe: IF NOT EXISTS via DO block)
     await client.query(`
             DO $$ BEGIN
-                CREATE TYPE item_category AS ENUM ('Equipments', 'Daily Use', 'Academics', 'Sports', 'Others');
+                CREATE TYPE item_category AS ENUM ('Hardware', 'Daily Use', 'Academics', 'Sports', 'Others');
             EXCEPTION WHEN duplicate_object THEN null;
             END $$;
         `);
@@ -106,7 +109,7 @@ const createTables = async () => {
     // Users table
     await client.query(`
             CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 name VARCHAR(255) NOT NULL,
                 email VARCHAR(255) NOT NULL UNIQUE,
                 password VARCHAR(255),
@@ -128,8 +131,8 @@ const createTables = async () => {
     // Items table
     await client.query(`
             CREATE TABLE IF NOT EXISTS items (
-                id SERIAL PRIMARY KEY,
-                "sellerId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                "sellerId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 title VARCHAR(255) NOT NULL,
                 description TEXT NOT NULL,
                 price DECIMAL(10, 2) NOT NULL,
@@ -145,8 +148,8 @@ const createTables = async () => {
     // Item images table
     await client.query(`
             CREATE TABLE IF NOT EXISTS item_images (
-                id SERIAL PRIMARY KEY,
-                "itemId" INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                "itemId" UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
                 "imageUrl" VARCHAR(255) NOT NULL,
                 "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -156,13 +159,15 @@ const createTables = async () => {
     // Requests table
     await client.query(`
             CREATE TABLE IF NOT EXISTS requests (
-                id SERIAL PRIMARY KEY,
-                "requesterId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                "requesterId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 title VARCHAR(255) NOT NULL,
                 description TEXT NOT NULL,
                 type request_type NOT NULL DEFAULT 'Normal',
                 "tokenCost" INTEGER DEFAULT 0,
                 status request_status DEFAULT 'Open',
+                budget DECIMAL(10, 2),
+                category item_category DEFAULT 'Others',
                 "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
@@ -171,10 +176,11 @@ const createTables = async () => {
     // Chats table
     await client.query(`
             CREATE TABLE IF NOT EXISTS chats (
-                id SERIAL PRIMARY KEY,
-                "buyerId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                "sellerId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                "itemId" INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                "buyerId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                "sellerId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                "itemId" UUID REFERENCES items(id) ON DELETE CASCADE,
+                "requestId" UUID REFERENCES requests(id) ON DELETE CASCADE,
                 "lastMessageAt" TIMESTAMPTZ DEFAULT NOW(),
                 status chat_status DEFAULT 'Active',
                 "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -185,10 +191,10 @@ const createTables = async () => {
     // Messages table
     await client.query(`
             CREATE TABLE IF NOT EXISTS messages (
-                id SERIAL PRIMARY KEY,
-                "chatId" INTEGER NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
-                "itemId" INTEGER REFERENCES items(id) ON DELETE CASCADE,
-                "senderId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                "chatId" UUID NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+                "itemId" UUID REFERENCES items(id) ON DELETE CASCADE,
+                "senderId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 content TEXT NOT NULL,
                 "isRead" BOOLEAN DEFAULT false,
                 "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -199,10 +205,10 @@ const createTables = async () => {
     // Buy Requests table
     await client.query(`
             CREATE TABLE IF NOT EXISTS buy_requests (
-                id SERIAL PRIMARY KEY,
-                "buyerId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                "sellerId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                "itemId" INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                "buyerId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                "sellerId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                "itemId" UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
                 message TEXT NOT NULL,
                 status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Accepted', 'Rejected')),
                 "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
@@ -220,11 +226,11 @@ const createTables = async () => {
     // Notifications table
     await client.query(`
             CREATE TABLE IF NOT EXISTS notifications (
-                id SERIAL PRIMARY KEY,
-                "userId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                "userId" UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
                 type VARCHAR(50) NOT NULL,
                 content TEXT NOT NULL,
-                "relatedId" INTEGER,
+                "relatedId" UUID,
                 "isRead" BOOLEAN DEFAULT false,
                 "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
                 "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
@@ -236,6 +242,42 @@ const createTables = async () => {
             CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications("userId");
             CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications("userId") WHERE "isRead" = false;
         `);
+
+    // Rename ENUM value from 'Equipments' to 'Hardware' if it exists
+    try {
+      await client.query(
+        `ALTER TYPE item_category RENAME VALUE 'Equipments' TO 'Hardware';`,
+      );
+    } catch (enumErr) {
+      if (enumErr.code !== "42704" && enumErr.code !== "22P04") {
+        // Ignore if type doesn't exist or value doesn't exist/already renamed
+        console.log(
+          "Minor non-fatal error during ENUM rename operations:",
+          enumErr.message,
+        );
+      }
+    }
+
+    // Add 'Pending' to item_status ENUM for admin approval workflow
+    try {
+      await client.query(
+        `ALTER TYPE item_status ADD VALUE IF NOT EXISTS 'Pending';`,
+      );
+    } catch (enumErr) {
+      console.log("item_status 'Pending' ENUM note:", enumErr.message);
+    }
+
+    // Add 'PendingApproval' to request_status ENUM for admin approval workflow
+    try {
+      await client.query(
+        `ALTER TYPE request_status ADD VALUE IF NOT EXISTS 'PendingApproval';`,
+      );
+    } catch (enumErr) {
+      console.log(
+        "request_status 'PendingApproval' ENUM note:",
+        enumErr.message,
+      );
+    }
 
     console.log("All tables created successfully.");
   } catch (err) {

@@ -19,8 +19,8 @@ const validateRequestInput = (title, description, type) => {
   if (!title || typeof title !== "string" || title.trim().length === 0) {
     errors.push("Title is required");
   }
-  if (title && title.length > 200) {
-    errors.push("Title must be 200 characters or less");
+  if (title && (title.length < 10 || title.length > 60)) {
+    errors.push("Title must be between 10 and 60 characters");
   }
   if (
     !description ||
@@ -29,8 +29,8 @@ const validateRequestInput = (title, description, type) => {
   ) {
     errors.push("Description is required");
   }
-  if (description && description.length > 2000) {
-    errors.push("Description must be 2000 characters or less");
+  if (description && (description.length < 20 || description.length > 300)) {
+    errors.push("Description must be between 20 and 300 characters");
   }
   if (type && !["Urgent", "Normal"].includes(type)) {
     errors.push("Type must be 'Urgent' or 'Normal'");
@@ -97,9 +97,11 @@ export const createRequest = async (req, res) => {
     }
 
     // Create the request within the same transaction
+    // Urgent requests go live immediately ('Open'); Normal requests need admin approval ('PendingApproval')
+    const requestStatus = type === "Urgent" ? "Open" : "PendingApproval";
     const requestResult = await client.query(
       `INSERT INTO requests (title, description, type, "tokenCost", "requesterId", status, category, "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, $5, 'Open', $6, NOW(), NOW())
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
        RETURNING *`,
       [
         safeTitle,
@@ -107,6 +109,7 @@ export const createRequest = async (req, res) => {
         type || "Normal",
         tokenCost,
         requesterId,
+        requestStatus,
         category || "Others",
       ],
     );

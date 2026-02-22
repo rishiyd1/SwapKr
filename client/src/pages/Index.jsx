@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import ExclusivityBar from "@/components/landing/ExclusivityBar";
 import Navbar from "@/components/landing/Navbar";
 import HeroSection from "@/components/landing/HeroSection";
@@ -7,9 +7,14 @@ import ListingScene from "@/components/landing/ListingScene";
 import BuyerScene from "@/components/landing/BuyerScene";
 import ActionStrip from "@/components/landing/ActionStrip";
 import ListingsShowcase from "@/components/landing/ListingsShowcase";
-import FoundersSection from "@/components/landing/FoundersSection";
-import FinalCTA from "@/components/landing/FinalCTA";
 import Footer from "@/components/landing/Footer";
+import SpinnerLogo from "@/components/SpinnerLogo";
+
+// Lazy-load heavy sections
+const FoundersSection = lazy(
+  () => import("@/components/landing/FoundersSection"),
+);
+const FinalCTA = lazy(() => import("@/components/landing/FinalCTA"));
 
 const Index = () => {
   const [logoActivated, setLogoActivated] = useState(false);
@@ -49,8 +54,10 @@ const Index = () => {
       </div>
       <ActionStrip />
       <ListingsShowcase />
-      <FoundersSection />
-      <FinalCTA />
+      <Suspense fallback={<SpinnerLogo size={40} />}>
+        <FoundersSection />
+        <FinalCTA />
+      </Suspense>
       <Footer />
     </div>
   );

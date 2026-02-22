@@ -2,8 +2,18 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import NavbarHome from "@/components/home/NavbarHome";
 import ItemCard from "@/components/home/ItemCard";
+import CreateItemDialog from "@/components/items/CreateItemDialog";
+import CreateRequestDialog from "@/components/requests/CreateRequestDialog";
 import { Button } from "@/components/ui/button";
-import { Filter, Package, Loader2, Zap, Clock } from "lucide-react";
+import {
+  Package,
+  Loader2,
+  Zap,
+  Clock,
+  PlusCircle,
+  ShoppingBag,
+  Hand,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useItems } from "@/hooks/useItems";
 import { useRequests } from "@/hooks/useRequests";
@@ -77,7 +87,10 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col font-body">
-      <NavbarHome />
+      <NavbarHome
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
+      />
 
       <main className="flex-1 container px-4 pt-4 pb-8 md:px-6 mx-auto max-w-7xl">
         {/* Categories - Connected Segmented Style */}
@@ -295,6 +308,47 @@ const Home = () => {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Mobile Floating Action Buttons */}
+      <div className="fixed bottom-6 right-5 z-50 flex flex-row items-center gap-3 md:hidden">
+        <CreateRequestDialog
+          trigger={
+            <motion.button
+              initial={{ opacity: 0, scale: 0.5, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{
+                delay: 0.1,
+                type: "spring",
+                stiffness: 300,
+                damping: 20,
+              }}
+              className="w-12 h-12 rounded-full bg-secondary/90 border border-primary/30 text-primary shadow-lg shadow-primary/10 backdrop-blur-md flex items-center justify-center hover:bg-secondary active:scale-95 transition-all"
+              title="Make a Request"
+            >
+              <Hand className="h-5 w-5" />
+            </motion.button>
+          }
+        />
+        <CreateItemDialog
+          trigger={
+            <motion.button
+              initial={{ opacity: 0, scale: 0.5, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{
+                delay: 0.2,
+                type: "spring",
+                stiffness: 300,
+                damping: 20,
+              }}
+              className="w-12 h-12 rounded-full bg-accent text-accent-foreground shadow-xl shadow-accent/30 flex items-center justify-center hover:bg-accent/90 active:scale-95 transition-all"
+              title="Sell Item"
+            >
+              <PlusCircle className="h-5 w-5" />
+            </motion.button>
+          }
+        />
+      </div>
+
       <Footer />
     </div>
   );

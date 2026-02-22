@@ -1,0 +1,56 @@
+# Vercel Web Analytics Implementation
+
+## Summary
+Successfully implemented Vercel Web Analytics in the SwapKr React + Vite application following the official Vercel documentation for React applications.
+
+## Changes Made
+
+### Modified Files
+- **client/src/main.jsx** - Added the `<Analytics />` component to the main app rendering
+
+## Implementation Details
+
+The `@vercel/analytics` package (v1.6.1) was already installed in the project's dependencies. I added the Analytics component to the main application entry point following the React implementation pattern from the Vercel Web Analytics documentation.
+
+### What Was Changed:
+1. Modified `client/src/main.jsx` to wrap the App component with a React fragment and include the `<Analytics />` component
+2. The Analytics import was already present but not being used - now it's properly integrated
+
+### Code Changes:
+```jsx
+// Before:
+createRoot(document.getElementById("root")).render(<App />);
+
+// After:
+createRoot(document.getElementById("root")).render(
+  <>
+    <App />
+    <Analytics />
+  </>
+);
+```
+
+## Testing & Validation
+
+All verification steps completed successfully:
+
+1. ✅ **Dependencies**: Already installed, no additional packages needed
+2. ✅ **Build**: Ran `npm install` and `npm run build` - build completed successfully
+3. ✅ **Linting**: Ran `npm run lint` - no new errors introduced (only pre-existing warnings)
+4. ✅ **Tests**: Ran `npm test` - all tests pass (1/1)
+
+## Implementation Notes
+
+- This is a React + Vite application, so I followed the `create-react-app` pattern from the documentation
+- The Analytics component is placed at the root level to track all page views and visitors across the application
+- The implementation uses `@vercel/analytics/react` which provides seamless integration with React Router (already in use in this project)
+- Once deployed to Vercel, analytics data will be available in the Vercel dashboard under the Analytics tab
+- The analytics will track visitors and page views via requests to `/_vercel/insights/view`
+
+## Next Steps for Deployment
+
+To see the analytics in action:
+1. Deploy the application to Vercel using `vercel deploy` or by connecting the Git repository
+2. Enable Web Analytics in the Vercel dashboard (Project → Analytics tab → Enable)
+3. Visit the deployed application to generate analytics data
+4. View the data in the Vercel dashboard under the Analytics tab

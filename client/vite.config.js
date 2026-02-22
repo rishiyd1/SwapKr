@@ -14,21 +14,25 @@ export default defineConfig(({ mode }) => {
   return {
     server: {
       host: "::",
-      port: 8080,
+      port: 8081,
+      strictPort: true,
       hmr: {
         overlay: false,
       },
       proxy: {
         "/api": {
-          target: env.VITE_BACKEND_URL,
+          target: env.VITE_BACKEND_URL || "http://localhost:5000",
           changeOrigin: true,
           secure: false,
         },
         "/socket.io": {
-          target: env.VITE_BACKEND_URL,
+          target: env.VITE_BACKEND_URL || "http://localhost:5000",
           ws: true,
           changeOrigin: true,
           secure: false,
+          configure: (proxy) => {
+            proxy.on("error", () => {}); // silence ECONNRESET noise
+          },
         },
       },
     },
