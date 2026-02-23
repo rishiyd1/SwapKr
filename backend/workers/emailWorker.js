@@ -216,91 +216,17 @@ const processEmailJob = async (job) => {
       const mailOptions = {
         from: process.env.SMTP_USER,
         to: user.email,
-        subject: `📢 Urgent Request: ${title}`,
-        html: `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body style="margin: 0; padding: 0; background-color: #f0f2f5; font-family: 'Segoe UI', Arial, sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f0f2f5; padding: 30px 0;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
-          
-          <!-- Header Banner -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #D4940F 0%, #B8860B 50%, #996F0A 100%); padding: 35px 40px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.5px;">⚡ Urgent Request on SwapKr</h1>
-            </td>
-          </tr>
+        subject: `Urgent Request: ${title} — SwapKr`,
+        text: `Hi ${user.name || "there"},
 
-          <!-- Body Content -->
-          <tr>
-            <td style="padding: 35px 40px;">
-              
-              <!-- Greeting -->
-              <p style="color: #333; font-size: 16px; margin: 0 0 20px 0;">Hi ${user.name || "there"},</p>
-              <p style="color: #555; font-size: 15px; margin: 0 0 25px 0;">Someone on campus needs help urgently. Here are the details:</p>
+${requesterName} posted an urgent request on SwapKr:
 
-              <!-- Request Card -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #fef9ee; border: 1px solid #fce8b2; border-radius: 8px; margin-bottom: 25px;">
-                <tr>
-                  <td style="border-left: 5px solid #D4940F; padding: 20px 25px; border-radius: 8px 0 0 8px;">
-                    <h2 style="color: #2c3e50; font-size: 18px; margin: 0 0 10px 0; font-weight: 600;">${title}</h2>
-                    <p style="color: #666; font-size: 14px; margin: 0; line-height: 1.6;">${description}</p>
-                  </td>
-                </tr>
-              </table>
+"${title}"
+${description}
 
-              <!-- Posted By -->
-              <p style="color: #555; font-size: 14px; margin: 0 0 25px 0;">
-                Posted by <strong style="color: #2c3e50;">${requesterName}</strong>
-              </p>
+View & respond: ${process.env.CLIENT_URL}/request/${requestId}
 
-              <!-- CTA Button -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center" style="padding: 10px 0 15px 0;">
-                    <a href="${process.env.CLIENT_URL}/request/${requestId}" 
-                       style="display: inline-block; background: linear-gradient(135deg, #D4940F, #B8860B); color: #ffffff; text-decoration: none; padding: 14px 40px; border-radius: 8px; font-size: 16px; font-weight: 600; letter-spacing: 0.3px;">
-                      View &amp; Respond
-                    </a>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Info Box -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 15px;">
-                <tr>
-                  <td style="background: #fef9ee; border-left: 4px solid #D4940F; padding: 12px 18px; border-radius: 4px;">
-                    <p style="color: #B8860B; font-size: 13px; margin: 0; font-weight: 600;">
-                      💡 Tip: <span style="font-weight: 400; color: #555;">Respond quickly to help your fellow student!</span>
-                    </p>
-                  </td>
-                </tr>
-              </table>
-
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background: #fafafa; padding: 20px 40px; border-top: 1px solid #eee; text-align: center;">
-              <p style="color: #999; font-size: 12px; margin: 0 0 5px 0;">You received this email because you are registered on <strong>SwapKr</strong>.</p>
-              <p style="color: #bbb; font-size: 11px; margin: 0;">SwapKr — Your Campus Marketplace</p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-        `,
+— SwapKr`,
       };
 
       try {
