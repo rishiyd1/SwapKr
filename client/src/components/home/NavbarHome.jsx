@@ -241,7 +241,7 @@ const NavbarHome = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-80 bg-card border-white/10 text-card-foreground p-0 overflow-hidden"
+              className="w-80 bg-card border-white/10 text-card-foreground p-0 max-h-[85vh] flex flex-col"
             >
               <div className="flex items-center justify-between p-4 border-b border-white/10">
                 <DropdownMenuLabel className="p-0 font-semibold">
@@ -261,7 +261,7 @@ const NavbarHome = ({
                   </Button>
                 )}
               </div>
-              <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+              <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
                 {displayedNotifications.length === 0 ? (
                   <div className="p-8 text-center text-muted-foreground flex flex-col items-center gap-2">
                     <Bell className="h-8 w-8 opacity-20" />
