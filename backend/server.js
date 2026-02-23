@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { pool } from "./models/index.js";
 import http from "http";
 import morgan from "morgan";
+import { fork } from "child_process";
 dotenv.config();
 
 const app = express();
@@ -93,5 +94,19 @@ const startServer = async () => {
 };
 
 startServer();
+
+// ─── Start Email Worker as a child process ─────────────────────────────
+try {
+  const worker = fork("./workers/emailWorker.js");
+  worker.on("error", (err) =>
+    console.error("Email worker error:", err.message),
+  );
+  worker.on("exit", (code) => {
+    if (code !== 0) console.error(`Email worker exited with code ${code}`);
+  });
+  console.log("📧 Email worker started as child process");
+} catch (err) {
+  console.error("Failed to start email worker:", err.message);
+}
 
 export default app;

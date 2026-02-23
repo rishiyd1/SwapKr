@@ -13,10 +13,28 @@ import { Worker } from "bullmq";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import pg from "pg";
-// import IORedis from "ioredis"; // Removed as we use the shared config
-import redisConnection from "../config/redis.js";
+import IORedis from "ioredis";
 
 dotenv.config();
+
+// ─── Build Redis connection for BullMQ Worker ──────────────────────────
+// BullMQ Worker needs its OWN connection (not a shared IORedis instance)
+// so it can create internal subscriber connections via .duplicate()
+const buildWorkerRedisConnection = () => {
+  if (process.env.REDIS_URL) {
+    return new IORedis(process.env.REDIS_URL, {
+      maxRetriesPerRequest: null,
+    });
+  }
+  return new IORedis({
+    host: process.env.REDIS_HOST || "localhost",
+    port: parseInt(process.env.REDIS_PORT) || 6379,
+    password: process.env.REDIS_PASSWORD || undefined,
+    maxRetriesPerRequest: null,
+  });
+};
+
+const redisConnection = buildWorkerRedisConnection();
 
 // ─── Structured Logger ─────────────────────────────────────────────────
 const log = {
@@ -193,14 +211,13 @@ const processEmailJob = async (job) => {
     // Advance the offset for the next batch
     offset += users.length;
 
-    const bccEmails = users.map((u) => u.email);
-
-    const mailOptions = {
-      from: `"SwapKr" <${process.env.SMTP_USER}>`,
-      to: process.env.SMTP_USER,
-      bcc: bccEmails,
-      subject: `📢 Urgent Request: ${title}`,
-      html: `
+    // Send individual emails (direct `to:` like OTP — BCC gets filtered by college servers)
+    for (const user of users) {
+      const mailOptions = {
+        from: process.env.SMTP_USER,
+        to: user.email,
+        subject: `📢 Urgent Request: ${title}`,
+        html: `
 <!DOCTYPE html>
 <html>
 <head>
@@ -225,7 +242,7 @@ const processEmailJob = async (job) => {
             <td style="padding: 35px 40px;">
               
               <!-- Greeting -->
-              <p style="color: #333; font-size: 16px; margin: 0 0 20px 0;">Hello,</p>
+              <p style="color: #333; font-size: 16px; margin: 0 0 20px 0;">Hi ${user.name || "there"},</p>
               <p style="color: #555; font-size: 15px; margin: 0 0 25px 0;">Someone on campus needs help urgently. Here are the details:</p>
 
               <!-- Request Card -->
@@ -283,53 +300,38 @@ const processEmailJob = async (job) => {
   </table>
 </body>
 </html>
-      `,
-    };
+        `,
+      };
 
-    try {
-      await transporter.sendMail(mailOptions);
-      emailsSent += users.length;
-
-      log.info("Batch sent", {
-        jobId,
-        batchCount: users.length,
-        emailsSent,
-        totalRecipients,
-        offset,
-      });
-
-      // Update progress in DB
-      await pool.query(
-        "UPDATE broadcast_logs SET emails_sent = $1 WHERE job_id = $2",
-        [emailsSent, jobId],
-      );
-
-      // Report progress to BullMQ
-      await job.updateProgress(
-        Math.round((emailsSent / totalRecipients) * 100),
-      );
-    } catch (error) {
-      log.error("Batch send failed", {
-        jobId,
-        offset,
-        attempt,
-        error: error.message,
-      });
-
-      // Update broadcast_logs with retry error info
-      await pool
-        .query(
-          "UPDATE broadcast_logs SET status = 'retrying', error = $1, emails_sent = $2 WHERE job_id = $3",
-          [
-            `Batch failed at offset ${offset}: ${error.message}`,
-            emailsSent,
-            jobId,
-          ],
-        )
-        .catch(() => {});
-
-      throw error; // Let BullMQ handle retry with backoff
+      try {
+        await transporter.sendMail(mailOptions);
+        emailsSent++;
+      } catch (sendErr) {
+        log.warn("Failed to send to individual user", {
+          jobId,
+          email: user.email,
+          error: sendErr.message,
+        });
+        // Continue sending to other users
+      }
     }
+
+    log.info("Batch sent", {
+      jobId,
+      batchCount: users.length,
+      emailsSent,
+      totalRecipients,
+      offset,
+    });
+
+    // Update progress in DB
+    await pool.query(
+      "UPDATE broadcast_logs SET emails_sent = $1 WHERE job_id = $2",
+      [emailsSent, jobId],
+    );
+
+    // Report progress to BullMQ
+    await job.updateProgress(Math.round((emailsSent / totalRecipients) * 100));
 
     // Pause between batches to respect SMTP rate limits
     if (users.length === BATCH_SIZE) {

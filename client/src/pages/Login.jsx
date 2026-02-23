@@ -45,7 +45,8 @@ const HOSTEL_OPTIONS = [
   "MBH B-block",
   "MBH F-block",
   "MGH",
-].sort();
+  "Day Scholar",
+];
 
 const Login = () => {
   const navigate = useNavigate();
