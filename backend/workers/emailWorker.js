@@ -224,7 +224,7 @@ ${requesterName} posted an urgent request on SwapKr:
 "${title}"
 ${description}
 
-View & respond: ${process.env.CLIENT_URL}/request/${requestId}
+View & respond: ${process.env.CLIENT_URL3}/request/${requestId}
 
 — SwapKr`,
       };

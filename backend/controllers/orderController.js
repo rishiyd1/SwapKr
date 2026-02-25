@@ -83,7 +83,8 @@ export const sendBuyRequest = async (req, res) => {
       const seller = await User.findById(item.sellerId);
       const buyer = await User.findById(buyerId);
       if (seller?.email && process.env.SMTP_USER && process.env.SMTP_PASS) {
-        const clientUrl = process.env.CLIENT_URL || "https://swapkr.vercel.app";
+        const clientUrl =
+          process.env.CLIENT_URL3 || "https://swapkr.vercel.app";
         const mailOptions = {
           from: process.env.SMTP_USER,
           to: seller.email,
@@ -94,7 +95,7 @@ ${buyer?.name || "Someone"} wants to buy your item "${item.title}" (₹${item.pr
 
 Their message: "${message.trim()}"
 
-View & respond: ${clientUrl}/item/${item.id}
+View & respond: ${clientUrl}/chats?requestId=${buyRequest.id}
 
 — SwapKr`,
         };
