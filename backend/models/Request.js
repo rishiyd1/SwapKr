@@ -119,13 +119,13 @@ const Request = {
     return result.rows;
   },
 
-  async findAllUrgentOpen() {
+  async findAllUrgentPending() {
     const result = await pool.query(
       `SELECT r.*,
               json_build_object('id', u.id, 'name', u.name, 'email', u.email, 'hostel', u.hostel) AS requester
        FROM requests r
        LEFT JOIN users u ON r."requesterId" = u.id
-       WHERE r.type = 'Urgent' AND r.status = 'Open'
+       WHERE r.type = 'Urgent' AND r.status = 'PendingApproval'
        ORDER BY r."createdAt" DESC`,
     );
     return result.rows;

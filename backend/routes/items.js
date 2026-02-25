@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Public routes (Viewing items) - Using optional auth to identify user if logged in
 router.get("/", optionalAuthenticateToken, itemController.getItems);
-router.get("/:id", itemController.getItemById);
+router.get("/:id", authenticateToken, itemController.getItemById);
 
 // Protected routes (Require login)
 router.post(

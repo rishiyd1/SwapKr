@@ -46,7 +46,7 @@ const SwapkrLogo = ({ activated = false }) => {
           width="32"
           height="32"
           className="object-contain relative z-10"
-          animate={{ rotate: expanded ? 180 : 0 }}
+          animate={{ rotate: expanded ? -180 : 0 }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
         />
         <AnimatePresence>

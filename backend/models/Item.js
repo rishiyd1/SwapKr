@@ -135,6 +135,63 @@ const Item = {
     return result.rows;
   },
 
+  // Public browse — returns items + images only, NO seller info
+  async findAllPublic({ where = {}, search, minPrice, maxPrice } = {}) {
+    let query = `
+            SELECT i.id, i.title, i.price, i.category, i.condition, i."createdAt",
+                   COALESCE(json_agg(json_build_object('id', img.id, 'itemId', img."itemId", 'imageUrl', img."imageUrl", 'createdAt', img."createdAt", 'updatedAt', img."updatedAt")) FILTER (WHERE img.id IS NOT NULL), '[]') AS images
+            FROM items i
+            LEFT JOIN item_images img ON img."itemId" = i.id
+        `;
+
+    const conditions = [];
+    const values = [];
+    let paramIndex = 1;
+
+    // Status filter
+    const status = where.status || "Available";
+    conditions.push(`i.status = $${paramIndex}`);
+    values.push(status);
+    paramIndex++;
+
+    // Search by title or description
+    if (search) {
+      conditions.push(
+        `(i.title ILIKE $${paramIndex} OR i.description ILIKE $${paramIndex})`,
+      );
+      values.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    // Category filter
+    if (where.category) {
+      conditions.push(`i.category = $${paramIndex}`);
+      values.push(where.category);
+      paramIndex++;
+    }
+
+    // Price range
+    if (minPrice) {
+      conditions.push(`i.price >= $${paramIndex}`);
+      values.push(minPrice);
+      paramIndex++;
+    }
+    if (maxPrice) {
+      conditions.push(`i.price <= $${paramIndex}`);
+      values.push(maxPrice);
+      paramIndex++;
+    }
+
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+
+    query += ' GROUP BY i.id ORDER BY i."createdAt" DESC';
+
+    const result = await pool.query(query, values);
+    return result.rows;
+  },
+
   async findMyListings(sellerId) {
     const result = await pool.query(
       `SELECT i.*,

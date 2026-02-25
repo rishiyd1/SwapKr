@@ -1,4 +1,5 @@
-import { Item, ItemImage } from "../models/index.js";
+import { Item, ItemImage, User } from "../models/index.js";
+import { sendAdminNotificationEmail } from "../utils/broadcast.js";
 
 // POST /api/items - Create a new listing
 export const createItem = async (req, res) => {
@@ -64,6 +65,19 @@ export const createItem = async (req, res) => {
     // Fetch item with images
     const itemWithImages = await Item.findByIdWithImages(newItem.id);
 
+    // Send admin notification email
+    try {
+      const seller = await User.findById(sellerId);
+      await sendAdminNotificationEmail("item", {
+        title,
+        description,
+        submitterName: seller?.name || "Unknown",
+        submitterEmail: seller?.email || "Unknown",
+      });
+    } catch (emailError) {
+      console.error("[createItem] Admin email error:", emailError.message);
+    }
+
     res
       .status(201)
       .json({ message: "Item listed successfully", item: itemWithImages });
@@ -84,12 +98,16 @@ export const getItems = async (req, res) => {
 
     if (category) where.category = category;
 
-    // Logic to exclude own items if logged in
-    if (req.user && req.user.id) {
-      where.excludeSellerId = req.user.id;
-    }
+    let items;
 
-    const items = await Item.findAll({ where, search, minPrice, maxPrice });
+    if (req.user && req.user.id) {
+      // Authenticated: include seller info & exclude own items
+      where.excludeSellerId = req.user.id;
+      items = await Item.findAll({ where, search, minPrice, maxPrice });
+    } else {
+      // Guest: return item + images only, no seller data
+      items = await Item.findAllPublic({ where, search, minPrice, maxPrice });
+    }
 
     res.status(200).json(items);
   } catch (error) {

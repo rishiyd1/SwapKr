@@ -1,5 +1,6 @@
 import { Request, User, Notification, pool } from "../models/index.js";
 import { addEmailJob } from "../queues/emailQueue.js";
+import { sendAdminNotificationEmail } from "../utils/broadcast.js";
 
 // ─── HTML Sanitization ─────────────────────────────────────────────────
 // Strips HTML/script tags to prevent XSS in email templates
@@ -97,8 +98,8 @@ export const createRequest = async (req, res) => {
     }
 
     // Create the request within the same transaction
-    // Urgent requests go live immediately ('Open'); Normal requests need admin approval ('PendingApproval')
-    const requestStatus = type === "Urgent" ? "Open" : "PendingApproval";
+    // Both Urgent and Normal requests now require admin approval
+    const requestStatus = "PendingApproval";
     const requestResult = await client.query(
       `INSERT INTO requests (title, description, type, "tokenCost", "requesterId", status, category, "createdAt", "updatedAt")
        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
@@ -119,44 +120,24 @@ export const createRequest = async (req, res) => {
     await client.query("COMMIT");
     client.release();
 
-    // ── NOTIFICATIONS ──
-
-    // 1. Create App Notifications (Persistent) for ALL users
-    // Normal requests send notifications upon Admin Approval, Urgent sends immediately
-    if (type === "Urgent") {
-      try {
-        await Notification.createBatchForRequest({
-          type: "Request",
-          content: `New Urgent Request: ${safeTitle}`,
-          relatedId: newRequest.id,
-          excludedUserId: requesterId,
-        });
-      } catch (notifError) {
-        console.error(
-          "[createRequest] Notification error:",
-          notifError.message,
-        );
-        // Don't fail the request if notifications fail
-      }
-    }
-
-    // 2. Enqueue Email Job for URGENT requests
-    if (type === "Urgent") {
-      try {
-        await addEmailJob({
+    // ── ADMIN NOTIFICATION EMAIL ──
+    // Notify admins that a new request is pending approval
+    try {
+      await sendAdminNotificationEmail(
+        type === "Urgent" ? "urgent-request" : "request",
+        {
           title: safeTitle,
           description: safeDescription,
-          requesterName: sanitize(user.name),
-          requesterId,
-          requestId: newRequest.id,
-        });
-      } catch (emailError) {
-        console.error(
-          "[createRequest] Failed to queue email job (Redis unavailable?):",
-          emailError.message,
-        );
-        // Do NOT rollback or fail the request; just log the error
-      }
+          submitterName: user.name,
+          submitterEmail: user.email,
+        },
+      );
+    } catch (emailError) {
+      console.error(
+        "[createRequest] Failed to send admin notification email:",
+        emailError.message,
+      );
+      // Don't fail the request if admin email fails
     }
 
     // Fetch updated token count

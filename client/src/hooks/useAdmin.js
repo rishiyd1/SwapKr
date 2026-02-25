@@ -100,6 +100,18 @@ export const useAllUsers = () =>
     queryFn: adminService.getAllUsers,
   });
 
+export const useApproveUrgentRequest = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: adminService.approveRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "urgentRequests"] });
+      toast.success("Urgent request approved & broadcasted!");
+    },
+    onError: (error) => toast.error(error.message),
+  });
+};
+
 export const useDeleteUrgentRequest = () => {
   const queryClient = useQueryClient();
   return useMutation({

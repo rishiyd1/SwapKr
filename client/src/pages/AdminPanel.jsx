@@ -32,6 +32,7 @@ import {
   useDeleteRequestAdmin,
   useDeleteUserAdmin,
   useAllUsers,
+  useApproveUrgentRequest,
   useDeleteUrgentRequest,
   isAdminEmail,
 } from "@/hooks/useAdmin";
@@ -253,7 +254,12 @@ const PendingRequestCard = ({
 );
 
 // ────────────────────────────── Urgent Card ─────────────────────────────
-const UrgentRequestCard = ({ request, onDeleteRequest }) => {
+const UrgentRequestCard = ({
+  request,
+  onApprove,
+  onDeleteRequest,
+  isApproving,
+}) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const deleteUserMutation = useDeleteUserAdmin();
 
@@ -308,6 +314,20 @@ const UrgentRequestCard = ({ request, onDeleteRequest }) => {
             </div>
           </div>
           <div className="flex flex-col gap-2 shrink-0">
+            <Button
+              size="sm"
+              onClick={() => onApprove(request.id)}
+              disabled={isApproving}
+              className="bg-green-600 hover:bg-green-700 text-white rounded-lg"
+            >
+              {isApproving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <Check className="w-4 h-4 mr-1" /> Approve
+                </>
+              )}
+            </Button>
             <Button
               size="sm"
               variant="ghost"
@@ -517,6 +537,7 @@ const AdminPanel = () => {
   const approveRequestMutation = useApproveRequest();
   const deleteRequestMutation = useDeleteRequestAdmin();
   const deleteUrgentRequestMutation = useDeleteUrgentRequest();
+  const approveUrgentRequestMutation = useApproveUrgentRequest();
 
   // Users
   const { data: allUsers = [], isLoading: loadingUsers } = useAllUsers();
@@ -679,9 +700,11 @@ const AdminPanel = () => {
                   <UrgentRequestCard
                     key={req.id}
                     request={req}
+                    onApprove={(id) => approveUrgentRequestMutation.mutate(id)}
                     onDeleteRequest={(id) =>
                       deleteUrgentRequestMutation.mutate(id)
                     }
+                    isApproving={approveUrgentRequestMutation.isPending}
                   />
                 ))
               ) : (

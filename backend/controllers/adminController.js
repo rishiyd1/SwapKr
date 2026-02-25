@@ -1,4 +1,5 @@
 import { Item, Request, User, ItemImage, Chat, pool } from "../models/index.js";
+import { addEmailJob } from "../queues/emailQueue.js";
 
 // ─── GET ALL USERS ──────────────────────────────────────────────────────
 export const getAllUsers = async (req, res) => {
@@ -111,14 +112,15 @@ export const approveRequest = async (req, res) => {
     });
 
     // ── NOTIFICATIONS ──
-    // Send app notification to all users when a normal request is approved
+    // Send app notification to all users when a request is approved
     try {
       if (updatedRequest) {
-        // Need Notification model imported securely
         const { Notification } = await import("../models/index.js");
+        const isUrgent = updatedRequest.type === "Urgent";
+        const prefix = isUrgent ? "Urgent Request" : "New Request";
         await Notification.createBatchForRequest({
           type: "Request",
-          content: `New Request: ${updatedRequest.title}`,
+          content: `${prefix}: ${updatedRequest.title}`,
           relatedId: updatedRequest.id,
           excludedUserId: updatedRequest.requesterId,
         });
@@ -128,6 +130,26 @@ export const approveRequest = async (req, res) => {
         "[Admin] Notification error on approveRequest:",
         notifError.message,
       );
+    }
+
+    // ── EMAIL BROADCAST (Urgent only) ──
+    // Queue broadcast email to all users for urgent requests
+    if (updatedRequest && updatedRequest.type === "Urgent") {
+      try {
+        const requester = await User.findById(updatedRequest.requesterId);
+        await addEmailJob({
+          title: updatedRequest.title,
+          description: updatedRequest.description,
+          requesterName: requester?.name || "A user",
+          requesterId: updatedRequest.requesterId,
+          requestId: updatedRequest.id,
+        });
+      } catch (emailError) {
+        console.error(
+          "[Admin] Failed to queue email broadcast on approveRequest:",
+          emailError.message,
+        );
+      }
     }
 
     res.status(200).json({
@@ -162,10 +184,10 @@ export const deleteRequest = async (req, res) => {
   }
 };
 
-// ─── GET URGENT REQUESTS (for review) ───────────────────────────────────
+// ─── GET URGENT REQUESTS (pending approval) ────────────────────────────
 export const getUrgentRequests = async (req, res) => {
   try {
-    const requests = await Request.findAllUrgentOpen();
+    const requests = await Request.findAllUrgentPending();
     res.status(200).json(requests);
   } catch (error) {
     console.error("[Admin] Get Urgent Requests Error:", error);

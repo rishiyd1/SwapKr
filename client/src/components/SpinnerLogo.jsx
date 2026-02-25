@@ -8,7 +8,7 @@ const SpinnerLogo = ({ size = 48, text = "" }) => {
         alt="Loading"
         width={size}
         height={size}
-        animate={{ rotate: 360 }}
+        animate={{ rotate: -360 }}
         transition={{
           duration: 1.2,
           repeat: Infinity,
