@@ -200,7 +200,7 @@ const Admin = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-sm text-slate-600">
-                                                    {user.department || 'N/A'} - {user.year || 'N/A'} Year
+                                                    {user.department || 'N/A'} - {user.year > 4 ? "Passed out / Graduated" : (user.year ? `${user.year} Year` : 'N/A')}
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <select

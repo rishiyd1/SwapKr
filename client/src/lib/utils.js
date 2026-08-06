@@ -26,8 +26,9 @@ export function formatAcademicYear(year) {
   if (!year) return "";
   const yr = parseInt(year, 10);
   if (isNaN(yr)) return year; // fallback
-  if (yr === 1) return "1st";
-  if (yr === 2) return "2nd";
-  if (yr === 3) return "3rd";
-  return `${yr}th`;
+  if (yr > 4) return "Passed out / Graduated";
+  if (yr === 1) return "1st Year";
+  if (yr === 2) return "2nd Year";
+  if (yr === 3) return "3rd Year";
+  return `${yr}th Year`;
 }

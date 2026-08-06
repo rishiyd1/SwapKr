@@ -8,22 +8,16 @@ const job = cron.schedule("0 0 1 8 *", async () => {
     try {
       await client.query("BEGIN");
 
-      // First, increment the year for all active students
+      // Increment the year for all active students
       const updateResult = await client.query(`
         UPDATE users
         SET year = year + 1
         WHERE year IS NOT NULL
       `);
 
-      // Then, delete anyone whose year is now > 4
-      const deleteResult = await client.query(`
-        DELETE FROM users
-        WHERE year > 4
-      `);
-
       await client.query("COMMIT");
       console.log(
-        `Annual cleanup complete. Promoted ${updateResult.rowCount} students to the next year and deleted ${deleteResult.rowCount} graduated accounts.`,
+        `Annual cleanup complete. Promoted ${updateResult.rowCount} students to the next year.`,
       );
     } catch (err) {
       await client.query("ROLLBACK");

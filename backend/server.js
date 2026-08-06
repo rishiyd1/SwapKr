@@ -20,7 +20,7 @@ import notificationRoutes from "./routes/notifications.js";
 import adminRoutes from "./routes/admin.js";
 import "./jobs/tokenReset.js";
 import "./jobs/notificationCleanup.js";
-import "./jobs/annualCleanup.js";
+import "./jobs/annualStudentPromotion.js";
 import { initSocket } from "./socket/socket.js";
 
 const server = http.createServer(app);
