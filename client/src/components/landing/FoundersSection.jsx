@@ -27,8 +27,8 @@ const founders = [
     color: "bg-accent/20",
     links: {
       github: "#",
-      linkedin: "#",
-      instagram: "#",
+      linkedin: "https://www.linkedin.com/in/anshuverma05/",
+      instagram: "https://www.instagram.com/anshu_verma.__",
     },
   },
   {
