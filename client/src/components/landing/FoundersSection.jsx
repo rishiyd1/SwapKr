@@ -26,7 +26,7 @@ const founders = [
     image: "/anshu.jpg",
     color: "bg-accent/20",
     links: {
-      github: "#",
+      github: "https://github.com/Anshuverma05",
       linkedin: "https://www.linkedin.com/in/anshuverma05/",
       instagram: "https://www.instagram.com/anshu_verma.__",
     },
