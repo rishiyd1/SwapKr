@@ -20,15 +20,15 @@ const founders = [
     },
   },
   {
-    name: "Rishi",
+    name: "Anshu Verma",
     role: "Co-Founder",
     message: "Always building. Always learning.",
-    image: "/rishi.jpeg",
+    image: "/anshu.jpg",
     color: "bg-accent/20",
     links: {
-      github: "https://github.com/rishiyd1",
-      linkedin: "https://www.linkedin.com/in/rishiy05/",
-      instagram: "https://www.instagram.com/ris_hi_.05",
+      github: "#",
+      linkedin: "#",
+      instagram: "#",
     },
   },
   {
