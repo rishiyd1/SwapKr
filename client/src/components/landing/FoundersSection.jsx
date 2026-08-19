@@ -15,10 +15,10 @@ const founders = [
     color: "bg-primary/20",
   },
   {
-    name: "Rishi",
+    name: "Anshu Verma",
     role: "Co-Founder",
     message: "Vedu ne mere kaam kharab kar diye h",
-    avatar: "🎨",
+    avatar: "/anshu.jpg",
     color: "bg-accent/20",
   },
   {
@@ -106,9 +106,17 @@ const FounderCard = ({
       />
 
       <div
-        className={`w-16 h-16 rounded-full ${founder.color} flex items-center justify-center text-3xl mx-auto mb-3 relative`}
+        className={`w-16 h-16 rounded-full ${founder.color} flex items-center justify-center text-3xl mx-auto mb-3 relative overflow-hidden`}
       >
-        {founder.avatar}
+        {founder.avatar.startsWith("/") ? (
+          <img
+            src={founder.avatar}
+            alt={founder.name}
+            className="w-full h-full object-cover rounded-full"
+          />
+        ) : (
+          founder.avatar
+        )}
         {/* Subtle pulse ring */}
         <motion.div
           className={`absolute inset-0 rounded-full border ${index % 2 === 0 ? "border-primary/20" : "border-accent/20"}`}
