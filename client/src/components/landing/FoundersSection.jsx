@@ -55,6 +55,18 @@ const founders = [
       instagram: "https://www.instagram.com/vedansh._017",
     },
   },
+  {
+    name: "Arpit Kakran",
+    role: "Co-Founder",
+    message: "Turning caffeine into code, one bug at a time.",
+    image: "/arpit.jpg",
+    color: "bg-primary/20",
+    links: {
+      github: "https://github.com/arpitKakran",
+      linkedin: "https://www.linkedin.com/in/arpitkakran",
+      instagram: "https://www.instagram.com/arpit.kakran18",
+    },
+  },
 ];
 
 const FounderCard = ({
@@ -320,7 +332,7 @@ const FoundersSection = () => {
                 <span className="text-primary glow-text">full</span>
               </h2>
               <p className="text-muted-foreground">
-                four students, one messy hostel room, and an idea
+                five students, one messy hostel room, and an idea
               </p>
             </motion.div>
 
@@ -329,15 +341,25 @@ const FoundersSection = () => {
               onMouseLeave={() => setHoveredIndex(null)}
             >
               {founders.map((f, i) => (
-                <FounderCard
+                <div
                   key={f.name}
-                  founder={f}
-                  index={i}
-                  isHovered={hoveredIndex === i}
-                  isOtherHovered={hoveredIndex !== null && hoveredIndex !== i}
-                  onHover={() => setHoveredIndex(i)}
-                  onLeave={() => setHoveredIndex(null)} // This might get overridden by parent onMouseLeave but good for specific card exit
-                />
+                  className={founders.length % 2 !== 0 && i === founders.length - 1
+                    ? "sm:col-span-2 flex justify-center"
+                    : ""}
+                >
+                  <div className={founders.length % 2 !== 0 && i === founders.length - 1
+                    ? "w-full sm:w-[calc(50%-10px)]"
+                    : "w-full"}>
+                    <FounderCard
+                      founder={f}
+                      index={i}
+                      isHovered={hoveredIndex === i}
+                      isOtherHovered={hoveredIndex !== null && hoveredIndex !== i}
+                      onHover={() => setHoveredIndex(i)}
+                      onLeave={() => setHoveredIndex(null)}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
           </div>
