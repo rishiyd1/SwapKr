@@ -24,6 +24,7 @@ const founders = [
     role: "Co-Founder",
     message: "Always building. Always learning.",
     image: "/anshu.jpg",
+    imagePosition: "center 25%",
     color: "bg-accent/20",
     links: {
       github: "https://github.com/Anshuverma05",
@@ -48,6 +49,7 @@ const founders = [
     role: "Co-founder",
     message: "Quiet focus. Loud results.",
     image: "/aditi.jpeg",
+    imagePosition: "center 25%",
     color: "bg-accent/20",
     links: {
       github: "https://github.com/ditimahajan",
@@ -60,6 +62,7 @@ const founders = [
     role: "Co-Founder",
     message: "Turning caffeine into code, one bug at a time.",
     image: "/arpit.jpg",
+    imagePosition: "center 20%",
     color: "bg-primary/20",
     links: {
       github: "https://github.com/arpitKakran",
@@ -144,6 +147,14 @@ const FounderCard = ({
           src={founder.image}
           alt={founder.name}
           className="w-full h-full object-cover"
+          style={founder.imagePosition ? { objectPosition: founder.imagePosition } : undefined}
+          onError={(e) => {
+            if (e.currentTarget.src.endsWith(".jpeg")) {
+              e.currentTarget.src = e.currentTarget.src.replace(".jpeg", ".jpg");
+            } else if (e.currentTarget.src.endsWith(".jpg")) {
+              e.currentTarget.src = e.currentTarget.src.replace(".jpg", ".jpeg");
+            }
+          }}
         />
         {/* Subtle pulse ring */}
         <motion.div
