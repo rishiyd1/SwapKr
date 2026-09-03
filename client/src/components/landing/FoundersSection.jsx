@@ -44,15 +44,15 @@ const founders = [
     },
   },
   {
-    name: "Vedansh",
+    name: "Aditi Mahajan",
     role: "Co-founder",
     message: "Quiet focus. Loud results.",
-    image: "/vedansh.jpeg",
+    image: "/aditi.jpg",
     color: "bg-accent/20",
     links: {
-      github: "https://github.com/Vedansh-017",
-      linkedin: "https://www.linkedin.com/in/vedansh-mamodiya-74880229a",
-      instagram: "https://www.instagram.com/vedansh._017",
+      github: "https://github.com/ditimahajan",
+      linkedin: "https://www.linkedin.com/in/mahajanaditi14?utm_source=share_via&utm_content=profile&utm_medium=member_android",
+      instagram: "https://www.instagram.com/mahajanaditi14",
     },
   },
   {
