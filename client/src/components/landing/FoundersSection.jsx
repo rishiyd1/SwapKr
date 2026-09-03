@@ -47,7 +47,7 @@ const founders = [
     name: "Aditi Mahajan",
     role: "Co-founder",
     message: "Quiet focus. Loud results.",
-    image: "/aditi.jpg",
+    image: "/aditi.jpeg",
     color: "bg-accent/20",
     links: {
       github: "https://github.com/ditimahajan",
